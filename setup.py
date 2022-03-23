@@ -65,6 +65,12 @@ else:
 # packages that are compatbile with your software.
 install_requires = [
     'gwpy',
+    'scikit-image',
+    'tensorflow>=2.0.0',
+    'pandas',
+    'sqlalchemy',
+    'gwtrigfind',
+    'panoptes_client',
 ]
 
 tests_require = [
@@ -82,7 +88,6 @@ extras_require = {
         'sphinx_rtd_theme',
         'sphinxcontrib_programoutput',
     ],
-    'ml': ['tensorflow'],
 }
 
 # -- run setup ----------------------------------------------------------------
@@ -120,7 +125,6 @@ setup(name=DISTNAME,
       tests_require=tests_require,
       extras_require=extras_require,
       python_requires='>3.5, <4',
-      use_2to3=True,
       classifiers=[
           'Development Status :: 4 - Beta',
           'Programming Language :: Python',

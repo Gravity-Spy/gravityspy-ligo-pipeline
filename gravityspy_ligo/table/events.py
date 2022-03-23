@@ -22,15 +22,11 @@ from gwpy.table import GravitySpyTable
 from gwpy.utils import mp as mp_utils
 from gwpy.table.filter import filter_table
 from gwpy.table.filters import in_segmentlist
-from sklearn.cluster import KMeans
 from astropy.table import Column
-from keras import backend as K
-K.set_image_data_format("channels_last")
 from keras.models import load_model
 
 from ..utils import log
 from ..utils import utils
-from ..api.project import GravitySpyProject
 from ..ml.train_classifier import make_model
 
 import panoptes_client
@@ -386,41 +382,6 @@ class Events(GravitySpyTable):
                                             path_to_semantic_model=path_to_semantic_model, **kwargs)
 
         return Events(results)
-
-    def determine_workflow_and_subjectset(self, project_info_pickle):
-        """Obtain omicron triggers to run gravityspy on
-
-        Parameters:
-            path_to_cnn (str): filename of file with Gravity Spy project info
-
-        Returns:
-            `Events` table with columns workflow and subjectset
-        """
-        if 'ml_confidence' not in self.keys() or 'ml_label' not in self.keys():
-            raise ValueError("This method only works if the confidence and label "
-                             "of the image in known.")
-        gspyproject = GravitySpyProject.load_project_from_cache(
-                                                                project_info_pickle
-                                                                )
-
-        workflows_for_each_class = gspyproject.get_level_structure(IDfilter='O2')
-        # Determine subject set and workflow this should go to.
-        level_of_images = []
-        subjectset_of_images = []
-        for label, confidence in zip(self['ml_label'], self['ml_confidence']):
-            for iworkflow in ['1610', '1934', '1935', '7765', '7766', '7767']:
-                if label in workflows_for_each_class[iworkflow].keys():
-                     if workflows_for_each_class[iworkflow][label][2][1] <= \
-                            confidence <= \
-                                 workflows_for_each_class[iworkflow][label][2][0]:
-                         level_of_images.append(int(workflows_for_each_class[iworkflow][label][0]))
-                         subjectset_of_images.append(workflows_for_each_class[iworkflow][label][1])
-                         break
-
-        self["workflow"] = level_of_images
-        self["subjectset"] = subjectset_of_images
-
-        return self
 
     def create_collection(self, name=None, private=True,
                           default_subject=None):
