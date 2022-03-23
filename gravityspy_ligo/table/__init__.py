@@ -1,18 +1,19 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (C) Scott Coughlin (2021)
+# Copyright (C) Scott Coughlin (2017-)
 #
-# This file is part of gravityspy_ligo
+# This file is part of the gravityspy python package.
 #
-# gravityspy_ligo is free software: you can redistribute it and/or modify
+# gravityspy is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# gravityspy_ligo is distributed in the hope that it will be useful,
+# gravityspy is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with gravityspy_ligo.  If not, see <http://www.gnu.org/licenses/>
+# along with gravityspy.  If not, see <http://www.gnu.org/licenses/>.
+
+from .events import Events

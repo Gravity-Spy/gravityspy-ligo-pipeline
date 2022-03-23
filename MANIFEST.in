@@ -1,3 +1,3 @@
 include LICENSE README.md MANIFEST.in
 include versioneer.py
-include YOURPACKAGE/_version.py
+include gravityspy_ligo/_version.py

@@ -224,6 +224,6 @@ pseudoxml:
 
 .PHONY: apidoc
 apidoc:
-	sphinx-apidoc -o api/ ../YOURPACKAGE --no-toc --separate --no-headings --force
+	sphinx-apidoc -o api/ ../gravityspy_ligo --no-toc --separate --no-headings --force
 	@echo
 	@echo "APIdoc run is complete."

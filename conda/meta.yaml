@@ -22,7 +22,7 @@ requirements:
 
 test:
   imports:
-    - YOURPACKAGE
+    - gravityspy_ligo
 
 about:
   home: {{ data['url'] }}
