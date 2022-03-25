@@ -14,8 +14,10 @@ Linux
 
 .. code-block:: bash
 
-   conda create --name gravityspy -c anaconda tensorflow python=3.7
-   pip install gravityspy
+
+   $ conda create --name gravityspy-py38 python=3.8
+   $ conda activate gravityspy-py38
+   $ python -m pip install git+https://github.com/Gravity-Spy/gravityspy-ligo-pipeline.git
 
 
 =======================

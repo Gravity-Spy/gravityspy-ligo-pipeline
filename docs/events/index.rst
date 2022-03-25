@@ -26,7 +26,7 @@ doing stuff
 
     In [1]: from gwpy.timeseries import TimeSeries
 
-    In [2]: from gravityspy.table import Events
+    In [2]: from gravityspy_ligo.table import Events
 
     In [3]: timeseries = TimeSeries.read('data/timeseries/L-L1_SOFTWAREINJ-1173197648-132.h5')
 

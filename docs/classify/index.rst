@@ -1,6 +1,6 @@
 .. _classify:
 
-.. currentmodule:: gravityspy.classify
+.. currentmodule:: gravityspy_ligo.classify
 
 ###################################
 Classify a Trigger With Gravity Spy
@@ -30,7 +30,7 @@ we will refer to these excess noise events as *glitches*.
 
     In [1]: from gwpy.timeseries import TimeSeries
 
-    In [2]: from gravityspy.classify import classify
+    In [2]: from gravityspy_ligo.classify import classify
 
     In [3]: timeseries = TimeSeries.read('data/timeseries/scratchy_timeseries_test.h5')
 
@@ -56,7 +56,7 @@ It is best here to break down the steps in the above. The process goes as follow
     :okwarning:
 
 
-    In [2]: from gravityspy.utils import utils
+    In [2]: from gravityspy_ligo.utils import utils
 
     In [3]: config = utils.GravitySpyConfigFile()
 
@@ -69,7 +69,7 @@ Now we plot all 4 of the spectrograms as png
 .. ipython::
     :okwarning:
 
-    In [1]: from gravityspy.plot import plot_qtransform
+    In [1]: from gravityspy_ligo.plot import plot_qtransform
 
     In [2]: plot_time_ranges = config.plot_time_ranges
 
