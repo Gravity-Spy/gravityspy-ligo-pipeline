@@ -171,6 +171,7 @@ def save_q_scans(plot_directory, specsgrams,
     Returns
     -------
     """
+    individual_image_filenames = []
     id_string = kwargs.pop('id_string', '{0:.9f}'.format(event_time))
     verbose = kwargs.pop('verbose', False)
     ###########################################################################
@@ -198,18 +199,20 @@ def save_q_scans(plot_directory, specsgrams,
 
     for idx, ind_fig in enumerate(ind_fig_all):
         dur = float(plot_time_ranges[idx])
-        ind_fig.save(os.path.join(
+        ind_fig_filename = os.path.join(
                                   plot_directory,
                                   detector_name + '_' + id_string
                                   + '_spectrogram_' + str(dur) +'.png'
-                                 ), dpi=100,
-                    )
+                                 )
+        ind_fig.save(ind_fig_filename, dpi=100)
+        individual_image_filenames.append(ind_fig_filename)
 
-    super_fig.save(os.path.join(plot_directory, id_string + '.png'),)
+    combined_image_filename = os.path.join(plot_directory, id_string + '.png')
+    super_fig.save(combined_image_filename)
 
     plt.close('all')
 
-    return
+    return individual_image_filenames, combined_image_filename
 
 def label_q_scans(plot_directory, path_to_cnn, **kwargs):
     """Classify triggers in this table
@@ -498,3 +501,48 @@ def get_deeplayer(plot_directory, path_to_cnn, **kwargs):
     scores_table['deeplayer'] = deeplayer
 
     return scores_table
+
+# define multiprocessing method
+def _make_single_qscan(inputs):
+    event_time = inputs[0]
+    ifo = inputs[1]
+    gid = inputs[2]
+    config = inputs[3]
+    plot_directory = inputs[4]
+    timeseries = inputs[5]
+    source = inputs[6]
+    channel_name = inputs[7]
+    frametype = inputs[8]
+    nproc = inputs[9]
+    verbose = inputs[10]
+
+    # Parse Ini File
+    plot_time_ranges = config.plot_time_ranges
+    plot_normalized_energy_range = config.plot_normalized_energy_range
+    try:
+        if timeseries is not None:
+            specsgrams, q_value = make_q_scans(event_time=event_time,
+                                               config=config,
+                                               timeseries=timeseries,
+                                               verbose=verbose)
+        if source is not None:
+            specsgrams, q_value = make_q_scans(event_time=event_time,
+                                               config=config,
+                                               source=source,
+                                               verbose=verbose)
+        if channel_name is not None:
+            specsgrams, q_value = make_q_scans(event_time=event_time,
+                                               config=config,
+                                               channel_name=channel_name,
+                                               frametype=frametype,
+                                               verbose=verbose)
+        individual_image_filenames, combined_image_filename = save_q_scans(plot_directory, specsgrams,
+                     plot_normalized_energy_range, plot_time_ranges,
+                     ifo, event_time, id_string=gid, verbose=verbose)
+
+        return event_time, q_value, individual_image_filenames, combined_image_filename
+    except Exception as exc:  # pylint: disable=broad-except
+        if nproc == 1:
+            raise
+        else:
+            return event_time, exc

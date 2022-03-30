@@ -61,6 +61,7 @@ def plot_qtransform(specsgrams, plot_normalized_energy_range, plot_time_ranges,
             A single `plot` object contianing all spectrograms
     """
     frange = kwargs.pop('frange', [10, 2048])
+    
 
     # Set some plotting params
     myfontsize = 15
