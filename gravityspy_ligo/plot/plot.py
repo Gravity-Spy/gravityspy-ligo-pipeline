@@ -61,25 +61,12 @@ def plot_qtransform(specsgrams, plot_normalized_energy_range, plot_time_ranges,
             A single `plot` object contianing all spectrograms
     """
     frange = kwargs.pop('frange', [10, 2048])
-    
+    title = kwargs.pop('title', '')
 
     # Set some plotting params
     myfontsize = 15
     mylabelfontsize = 20
     my_color = 'k'
-    if detector_name == 'H1':
-        title = "Hanford"
-    elif detector_name == 'L1':
-        title = "Livingston"
-    elif detector_name == 'V1':
-        title = "VIRGO"
-    elif detector_name == 'G1':
-        title = "GEO"
-    elif detector_name == 'K1':
-        title = "KAGRA"
-    else:
-        raise ValueError('You have supplied a detector '
-                         'that is unknown at this time.')
 
     if start_time < 1126400000:
         title = title + ' - pre O1'

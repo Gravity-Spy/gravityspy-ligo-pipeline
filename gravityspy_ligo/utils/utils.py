@@ -538,7 +538,7 @@ def _make_single_qscan(inputs):
                                                verbose=verbose)
         individual_image_filenames, combined_image_filename = save_q_scans(plot_directory, specsgrams,
                      plot_normalized_energy_range, plot_time_ranges,
-                     ifo, event_time, id_string=gid, verbose=verbose)
+                     ifo, event_time, id_string=gid, verbose=verbose, title=channel_name)
 
         return event_time, q_value, individual_image_filenames, combined_image_filename
     except Exception as exc:  # pylint: disable=broad-except
