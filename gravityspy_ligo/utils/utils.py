@@ -509,40 +509,25 @@ def _make_single_qscan(inputs):
     gid = inputs[2]
     config = inputs[3]
     plot_directory = inputs[4]
-    timeseries = inputs[5]
-    source = inputs[6]
-    channel_name = inputs[7]
-    frametype = inputs[8]
-    nproc = inputs[9]
-    verbose = inputs[10]
+    channel_name = inputs[5]
+    frametype = inputs[6]
+    verbose = inputs[7]
 
     # Parse Ini File
     plot_time_ranges = config.plot_time_ranges
     plot_normalized_energy_range = config.plot_normalized_energy_range
-    try:
-        if timeseries is not None:
-            specsgrams, q_value = make_q_scans(event_time=event_time,
-                                               config=config,
-                                               timeseries=timeseries,
-                                               verbose=verbose)
-        if source is not None:
-            specsgrams, q_value = make_q_scans(event_time=event_time,
-                                               config=config,
-                                               source=source,
-                                               verbose=verbose)
-        if channel_name is not None:
-            specsgrams, q_value = make_q_scans(event_time=event_time,
-                                               config=config,
-                                               channel_name=channel_name,
-                                               frametype=frametype,
-                                               verbose=verbose)
-        individual_image_filenames, combined_image_filename = save_q_scans(plot_directory, specsgrams,
-                     plot_normalized_energy_range, plot_time_ranges,
-                     ifo, event_time, id_string=gid, verbose=verbose, title=channel_name)
 
-        return event_time, q_value, individual_image_filenames, combined_image_filename
-    except Exception as exc:  # pylint: disable=broad-except
-        if nproc == 1:
-            raise
-        else:
-            return event_time, exc
+    if (channel_name is not None) and (frametype is not None):
+        specsgrams, q_value = make_q_scans(event_time=event_time,
+                                           config=config,
+                                           channel_name=channel_name,
+                                           frametype=frametype,
+                                           verbose=verbose)
+    else:
+        raise ValueError("User did not pass either a timeseries object, the path to the location of the timeseries data, or both the channel name and frame type of the timeseries data")
+
+    individual_image_filenames, combined_image_filename = save_q_scans(plot_directory, specsgrams,
+                 plot_normalized_energy_range, plot_time_ranges,
+                 ifo, event_time, id_string=gid, verbose=verbose, title=channel_name)
+
+    return event_time, q_value, individual_image_filenames, combined_image_filename

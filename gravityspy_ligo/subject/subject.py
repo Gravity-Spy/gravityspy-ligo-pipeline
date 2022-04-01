@@ -76,23 +76,27 @@ class GravitySpySubject:
             self.number_of_aux_channels_to_show = number_of_aux_channels_to_show
             self.list_of_auxiliary_channel_names = None
 
-    def make_omega_scans(self, **kwargs):
+    def make_omega_scans(self, pool=None, **kwargs):
         # Parse key word arguments
         config = kwargs.pop('config', utils.GravitySpyConfigFile())
         plot_directory = kwargs.pop('plot_directory', os.path.join(os.getcwd(), 'plots', time.from_gps(self.event_time).strftime('%Y-%m-%d'), str(self.event_time)))
-        timeseries = kwargs.pop('timeseries', None)
-        source = kwargs.pop('source', None)
         verbose = kwargs.pop('verbose', False)
         nproc = kwargs.pop('nproc', 1)
 
-        inputs = ((self.event_time, self.ifo, '{0}_{1}'.format(self.gravityspy_id, channel_name), config, plot_directory,
-                   timeseries, source, channel_name, frametype, nproc, verbose)
+        inputs = ((self.event_time, self.ifo, '{0}_{1}'.format(self.gravityspy_id, channel_name), config, plot_directory, channel_name, frametype, verbose)
                   for channel_name, frametype, in zip(self.all_channels, self.frametypes))
 
         # make q_scans
-        with multiprocessing.Pool(nproc) as p:
-            output = p.map(utils._make_single_qscan,
-                           inputs)
+        if (pool is None) and (nproc > 1):
+            with multiprocessing.Pool(nproc) as pool:
+                output = pool.map(utils._make_single_qscan,
+                               inputs)
+        elif (pool is None) and (nproc == 1):
+            output = list(map(utils._make_single_qscan, inputs))
+        elif pool is not None:
+            output = pool.map(utils._make_single_qscan,
+                              inputs)
+             
 
         # raise exceptions (from multiprocessing, single process raises inline)
         for f, q_value, individual_image_filenames, combined_image_filename in output:
