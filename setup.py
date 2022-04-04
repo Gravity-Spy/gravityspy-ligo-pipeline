@@ -71,6 +71,7 @@ install_requires = [
     'sqlalchemy',
     'gwtrigfind',
     'python-ligo-lw',
+    'psycopg2-binary',
     'panoptes_client',
 ]
 
