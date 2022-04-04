@@ -70,6 +70,7 @@ install_requires = [
     'pandas',
     'sqlalchemy',
     'gwtrigfind',
+    'python-ligo-lw',
     'panoptes_client',
 ]
 
@@ -87,6 +88,7 @@ extras_require = {
         'numpydoc',
         'sphinx_rtd_theme',
         'sphinxcontrib_programoutput',
+        'lalsuite'
     ],
 }
 
