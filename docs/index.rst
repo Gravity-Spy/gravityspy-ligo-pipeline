@@ -18,8 +18,8 @@ The easiest method to install gravityspy is using `pip <https://pip.pypa.io/en/s
 
 .. code-block:: bash
 
-   $ conda create --name gravityspy-py38 python=3.8
-   $ conda activate gravityspy-py38
+   $ conda create --name gravityspy-plus-py38 -c conda-forge gwpy python-ldas-tools-frameapi python-ldas-tools-framecpp pandas scikit-image python-lal python-ligo-lw python=3.8 --yes
+   $ conda activate gravityspy-plus-py38
    $ python -m pip install git+https://github.com/Gravity-Spy/gravityspy-ligo-pipeline.git
 
 For more details see :ref:`install`.
