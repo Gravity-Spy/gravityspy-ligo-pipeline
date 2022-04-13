@@ -148,13 +148,13 @@ def plot_qtransform(specsgrams, plot_normalized_energy_range, plot_time_ranges,
                                       subplot_kw={'xscale': 'auto-gps'},
                                       figsize=(27, 6), FigureClass=Plot)
     count = 0
-
+    list_zip_iax, list_zip_spec = list(zip(axes, specsgrams))
+    
     for iax, spec in zip(axes, specsgrams):
         if count /  2 == 0:
-            iax.imshow(specsgrams[0])
+            spec = list_zip_spec[0]
 
-        else:
-            iax.imshow(spec)
+        iax.imshow(spec)
 
         iax.set_yscale('log', base=2)
         iax.set_xscale('linear')
