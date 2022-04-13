@@ -143,14 +143,18 @@ def plot_qtransform(specsgrams, plot_normalized_energy_range, plot_time_ranges,
         ind_fig_all.append(ind_fig)
 
     # Create one image containing all spectogram grams
-    super_fig, axes = pyplot.subplots(nrows=1, ncols=len(specsgrams),
+    super_fig, axes = pyplot.subplots(nrows=2, ncols=len(specsgrams) - 1,
                                       sharey=True,
                                       subplot_kw={'xscale': 'auto-gps'},
                                       figsize=(27, 6), FigureClass=Plot)
     count = 0
 
     for iax, spec in zip(axes, specsgrams):
-        iax.imshow(spec)
+        if count /  2 == 0:
+            iax.imshow(specsgrams[0])
+
+        else:
+            iax.imshow(spec)
 
         iax.set_yscale('log', base=2)
         iax.set_xscale('linear')

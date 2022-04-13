@@ -111,23 +111,8 @@ class GravitySpySubject:
                 self.ldvw_glitchdb_image_filenames.append(combined_image_filename)
                 self.zooniverse_subject_image_filenames.extend(individual_image_filenames)
 
-    def combine_images_for_subject_upload(self, **kwargs):
-        plot_directory = kwargs.pop('plot_directory', os.path.join(os.getcwd(), 'plots', time.from_gps(self.event_time).strftime('%Y-%m-%d'), str(self.event_time)))
-        id_string = kwargs.pop('id_string', '{0:.9f}'.format(self.event_time))
-        for idx, image in enumerate(self.zooniverse_subject_image_filenames):
-            dur = float(plot_time_ranges[idx])
-            ind_fig_filename = os.path.join(
-                                    plot_directory,
-                                    detector_name + '_' + id_string
-                                    + '_spectrogram_' + str(dur) +'.png'
-                                    )
-            ind_fig.save(ind_fig_filename, dpi=100)
-            individual_image_filenames.append(ind_fig_filename)
-
-        combined_image_filename = os.path.join(plot_directory, id_string + '.png')
-        super_fig.save(combined_image_filename)    
+    #def combine_images_for_subject_upload(self, **kwargs):
         
-
     def upload_to_zooniverse(self, subject_set_id, project='9979'):
         """Obtain omicron triggers to run gravityspy on
 
@@ -141,12 +126,12 @@ class GravitySpySubject:
         subject.links.project = project
         subject.metadata['date'] = datetime.datetime.now().strftime('%Y%m%d')
         subject.metadata['subject_id'] = str(self.gravityspy_id)
-        for idx, image in enumerate(self.zooniverse_subject_image_filenames): 
+        for idx, image in enumerate(self.ldvw_glitchdb_image_filenames): 
             subject.add_location(str(image))
             subject.metadata['Filename{0}'.format(idx+1)] = image.split('/')[-1]
         subject.save()
         self.zooniverse_id = int(subject.id)
-        for idx, image in enumerate(self.zooniverse_subject_image_filenames):
+        for idx, image in enumerate(self.ldvw_glitchdb_image_filenames):
             setattr(self, 'url{0}'.format(idx), subject.raw['locations'][idx]['image/png'].split('?')[0])
 
         subjectset = panoptes_client.SubjectSet.find(subject_set_id)
