@@ -106,5 +106,5 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# ignore imagese
-plots/2019-10-01
+# ignore images
+plots
