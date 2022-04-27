@@ -19,7 +19,7 @@ q_scan_ax.set_epoch(0)
 q_gram_ax.set_xlim(-.2, .2)
 q_gram_ax.set_epoch(0)
 
-q_scan_plot.show()
+# q_scan_plot.save()
 q_gram_plot.show()
 
 
