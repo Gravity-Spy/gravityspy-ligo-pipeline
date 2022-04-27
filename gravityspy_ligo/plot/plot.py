@@ -31,7 +31,7 @@ from gwpy.plot import Plot
 import numpy
 
 
-def plot_qtransform(specsgrams, plot_normalized_energy_range, plot_time_ranges,
+def plot_qtransform(spectrogram, plot_normalized_energy_range, plot_time_ranges,
                     detector_name, start_time, **kwargs):
     """Fetch raw data around a glitch
 
@@ -95,17 +95,14 @@ def plot_qtransform(specsgrams, plot_normalized_energy_range, plot_time_ranges,
 
     ind_fig_all = []
 
-    for i, spec in enumerate(specsgrams):
-
-        ind_fig = spec.plot(figsize=[8, 6])
+    for dur in plot_time_ranges:
+        ind_fig = spectrogram.crop(start_time-dur/2,start_time+dur/2).plot(figsize=[8, 6])
 
         ax = ind_fig.gca()
         ax.set_position([0.125, 0.1, 0.775, 0.8])
         ax.set_yscale('log', base=2)
         ax.set_xscale('linear')
         ax.grid(False)
-
-        dur = float(plot_time_ranges[i])
 
         xticks = numpy.linspace(spec.xindex.min().value,
                                 spec.xindex.max().value, 5)
@@ -142,6 +139,7 @@ def plot_qtransform(specsgrams, plot_normalized_energy_range, plot_time_ranges,
 
         ind_fig_all.append(ind_fig)
 
+    breakpoint()
     # Create one image containing all spectogram grams
     super_fig, axes = pyplot.subplots(nrows=1, ncols=len(specsgrams),
                                       sharey=True,

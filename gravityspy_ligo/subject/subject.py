@@ -16,15 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with gravityspy.  If not, see <http://www.gnu.org/licenses/>.
 
-from ..utils import utils
+from ..utils import utils, hveto_parser
 from ..table.events import id_generator
 from gwpy import time
 import multiprocessing
 import os
 import datetime
 import panoptes_client
-import numpy as np
-import matplotlib.pyplot as plt
+import glob
 
 class GravitySpySubject:
     """The frame work for thinking about a single Gravity Spy subject
@@ -34,7 +33,7 @@ class GravitySpySubject:
         Args:
             event_time (float): The GPS time at which an excess noise event occurred.
             ifo (str): What interferometer had this an excess noise event
-            event_generator (str): The algorithm that tells us an excess noise event occurred 
+            event_generator (str): The algorithm that tells us an excess noise event occurred
             auxiliary_channel_correlation_algorithm (str): The algorithm that tells us the names of the top X correlated auxiliary channels with respect to h(t).
             number_of_aux_channels_to_show (int): This number will determine the top N number of channels from the list provided by the auxiliary_channel_correlation_algorithm that will be kept and shown for this Subject.
             manual_list_of_auxiliary_channel_names (list): This will override any auxiliary channel list that might have been supplied by the auxiliary_channel_correlation_algorithm and force this to be the auxiliary channels that are associated with this Subject.
@@ -48,7 +47,8 @@ class GravitySpySubject:
         self.event_generator = event_generator
         self.all_channels = []
         self.frametypes = []
-        self.qvalues = []
+        self.q_values = []
+        self.q_transforms = []
         self.ldvw_glitchdb_image_filenames = []
         self.zooniverse_subject_image_filenames = []
 
@@ -76,16 +76,30 @@ class GravitySpySubject:
         else:
             self.auxiliary_channel_correlation_algorithm = auxiliary_channel_correlation_algorithm
             self.number_of_aux_channels_to_show = number_of_aux_channels_to_show
+            if self.auxiliary_channel_correlation_algorithm == 'hveto':
+                # based on the start and end time, produce a date timestamp with YYYYMMDD
+                # convert start time from gps to regular date
+                event_time_in_date_format = time.from_gps(self.event_time)
+
+                event_time_in_YYYYMMDD_format = event_time_in_date_format.strftime("%Y%m%d")
+
+                each_rounds_svg_file = glob.glob("/home/detchar/public_html/hveto/day/{0}/latest/plots/*.svg".format(event_time_in_YYYYMMDD_format))
+
+                for each_round_svg in each_rounds_svg_file:
+                    print(each_round_svg)
+                    win_chnl, chnl, sig = hveto_parser.hveto_parser(each_round_svg)
+                breakpoint()
+                print("hello")
             self.list_of_auxiliary_channel_names = None
+
 
     def make_omega_scans(self, pool=None, **kwargs):
         # Parse key word arguments
         config = kwargs.pop('config', utils.GravitySpyConfigFile())
-        plot_directory = kwargs.pop('plot_directory', os.path.join(os.getcwd(), 'plots', time.from_gps(self.event_time).strftime('%Y-%m-%d'), str(self.event_time)))
         verbose = kwargs.pop('verbose', False)
         nproc = kwargs.pop('nproc', 1)
 
-        inputs = ((self.event_time, self.ifo, '{0}_{1}'.format(self.gravityspy_id, channel_name), config, plot_directory, channel_name, frametype, verbose)
+        inputs = ((self.event_time, config, channel_name, frametype, verbose)
                   for channel_name, frametype, in zip(self.all_channels, self.frametypes))
 
         # make q_scans
@@ -98,21 +112,61 @@ class GravitySpySubject:
         elif pool is not None:
             output = pool.map(utils._make_single_qscan,
                               inputs)
-             
 
         # raise exceptions (from multiprocessing, single process raises inline)
-        for f, q_value, individual_image_filenames, combined_image_filename in output:
+        for event_time, q_transform, q_value in output:
             if isinstance(q_value, Exception):
-                q_value.args = ('Failed to make q scan at time %s: %s' % (f,
+                q_value.args = ('Failed to make q scan at time %s: %s' % (event_time,
                                                                     str(q_value)),)
                 raise q_value
             else:
-                self.qvalues.append(q_value)
+                self.q_values.append(q_value)
+                self.q_transforms.append(q_transform)
+
+        box_x =  self.q_transforms[0].box_x
+        box_y =  self.q_transforms[0].box_y
+        box_x_dur =  self.q_transforms[0].box_x_dur
+        box_y_dur =  self.q_transforms[0].box_y_dur
+        for q_scan in self.q_transforms:
+            setattr(q_scan, 'box_x', box_x)
+            setattr(q_scan, 'box_y', box_y)
+            setattr(q_scan, 'box_x_dur', box_x_dur)
+            setattr(q_scan, 'box_y_dur', box_y_dur)
+
+    def save_omega_scans(self, pool=None, **kwargs):
+        # Parse key word arguments
+        config = kwargs.pop('config', utils.GravitySpyConfigFile())
+        plot_directory = kwargs.pop('plot_directory', os.path.join(os.getcwd(), 'plots', time.from_gps(self.event_time).strftime('%Y-%m-%d'), str(self.event_time)))
+        verbose = kwargs.pop('verbose', False)
+        nproc = kwargs.pop('nproc', 1)
+
+        inputs = inputs = ((self.event_time, self.ifo, '{0}_{1}'.format(self.gravityspy_id, channel_name), config, plot_directory, channel_name, frametype, verbose, q_transform) for channel_name, frametype, q_transform in zip(self.all_channels, self.frametypes, self.q_transforms))
+
+        # make q_scans
+        if (pool is None) and (nproc > 1):
+            with multiprocessing.Pool(nproc) as pool:
+                output = pool.map(utils._save_q_scans,
+                               inputs)
+        elif (pool is None) and (nproc == 1):
+            output = list(map(utils._save_q_scans, inputs))
+        elif pool is not None:
+            output = pool.map(utils._save_q_scans,
+                              inputs)
+
+        for event_time, individual_image_filenames, combined_image_filename in output:
+            if isinstance(q_value, Exception):
+                q_value.args = ('Failed to make q scan at time %s: %s' % (event_time,
+                                                                    str(q_value)),)
+                raise q_value
+            else:
                 self.ldvw_glitchdb_image_filenames.append(combined_image_filename)
                 self.zooniverse_subject_image_filenames.extend(individual_image_filenames)
 
-    #def combine_images_for_subject_upload(self, **kwargs):
-        
+    def combine_images_for_subject_upload(self):
+        for image_filename in self.zooniverse_subject_image_filenames:
+            breakpoint()
+
+
     def upload_to_zooniverse(self, subject_set_id, project='9979'):
         """Obtain omicron triggers to run gravityspy on
 
@@ -126,7 +180,7 @@ class GravitySpySubject:
         subject.links.project = project
         subject.metadata['date'] = datetime.datetime.now().strftime('%Y%m%d')
         subject.metadata['subject_id'] = str(self.gravityspy_id)
-        for idx, image in enumerate(self.ldvw_glitchdb_image_filenames): 
+        for idx, image in enumerate(self.zooniverse_subject_image_filenames):
             subject.add_location(str(image))
             subject.metadata['Filename{0}'.format(idx+1)] = image.split('/')[-1]
         subject.save()

@@ -129,36 +129,36 @@ def make_q_scans(event_time, **kwargs):
         logger.info('Processing Q Scans...')
 
     specsgrams = []
-    for time_window in plot_time_ranges:
-        duration_for_plot = time_window/2
-        try:
-            outseg = Segment(center_time - duration_for_plot,
-                             center_time + duration_for_plot)
-            q_scan = data.q_transform(qrange=tuple(search_q_range),
-                                      frange=tuple(search_frequency_range),
-                                      gps=center_time,
-                                      search=0.5, tres=0.002,
-                                      fres=0.5, outseg=outseg, whiten=True)
-            q_value = q_scan.q
-            q_scan = q_scan.crop(center_time-time_window/2,
-                                 center_time+time_window/2)
-        except:
-            outseg = Segment(center_time - 2*duration_for_plot,
-                             center_time + 2*duration_for_plot)
-            q_scan = data.q_transform(qrange=tuple(search_q_range),
-                                      frange=tuple(search_frequency_range),
-                                      gps=center_time, search=0.5,
-                                      tres=0.002,
-                                      fres=0.5, outseg=outseg, whiten=True)
-            q_value = q_scan.q
-            q_scan = q_scan.crop(center_time-time_window/2,
-                                 center_time+time_window/2)
-        specsgrams.append(q_scan)
+    # Make a single q_transform at the largest duration and then crop this image down to make the short duration spectrograms
+    time_window = max(plot_time_ranges)
+    duration_for_plot = time_window/2
+    outseg = Segment(center_time - 2*duration_for_plot,
+                     center_time + 2*duration_for_plot)
+    q_scan = data.q_transform(qrange=tuple(search_q_range),
+                              frange=tuple(search_frequency_range),
+                              gps=center_time, search=0.5,
+                              tres=0.002,
+                              fres=0.5, outseg=outseg, whiten=True)
 
+    if 'GDS-CALIB_STRAIN' in channel_name:
+        # check if this is the main channel, if it is we will get the q_gram in order to create a box around the glitch feature
+        search = Segment(center_time-0.25, center_time+0.25)
+        q_gram = data.q_gram(qrange=tuple(search_q_range),
+                             frange=tuple(search_frequency_range),
+                             snrthresh=7.0,
+                             search=search)
+
+        setattr(q_scan, 'box_x', q_gram['time'].min())
+        setattr(q_scan, 'box_y', q_gram['frequency'].min())
+        setattr(q_scan, 'box_x_dur', q_gram['duration'].sum())
+        setattr(q_scan, 'box_y_dur', q_gram['frequency'].max() - q_gram['frequency'].min() + q_gram['bandwidth'].max())
+
+    q_value = q_scan.q
+    
     if verbose:
         logger.info('The most significant q value is {0}'.format(q_value))
 
-    return specsgrams, q_value
+    return q_scan, q_value
 
 def save_q_scans(plot_directory, specsgrams,
                  plot_normalized_energy_range, plot_time_ranges,
@@ -505,17 +505,10 @@ def get_deeplayer(plot_directory, path_to_cnn, **kwargs):
 # define multiprocessing method
 def _make_single_qscan(inputs):
     event_time = inputs[0]
-    ifo = inputs[1]
-    gid = inputs[2]
-    config = inputs[3]
-    plot_directory = inputs[4]
-    channel_name = inputs[5]
-    frametype = inputs[6]
-    verbose = inputs[7]
-
-    # Parse Ini File
-    plot_time_ranges = config.plot_time_ranges
-    plot_normalized_energy_range = config.plot_normalized_energy_range
+    config = inputs[1]
+    channel_name = inputs[2]
+    frametype = inputs[3]
+    verbose = inputs[4]
 
     if (channel_name is not None) and (frametype is not None):
         specsgrams, q_value = make_q_scans(event_time=event_time,
@@ -526,8 +519,25 @@ def _make_single_qscan(inputs):
     else:
         raise ValueError("User did not pass either a timeseries object, the path to the location of the timeseries data, or both the channel name and frame type of the timeseries data")
 
+    return event_time, specsgrams, q_value
+
+def _save_q_scans(inputs):
+    event_time = inputs[0]
+    ifo = inputs[1]
+    gid = inputs[2]
+    config = inputs[3]
+    plot_directory = inputs[4]
+    channel_name = inputs[5]
+    frametype = inputs[6]
+    verbose = inputs[7]
+    specsgrams = inputs[8]
+
+    # Parse Ini File
+    plot_time_ranges = config.plot_time_ranges
+    plot_normalized_energy_range = config.plot_normalized_energy_range
+
     individual_image_filenames, combined_image_filename = save_q_scans(plot_directory, specsgrams,
                  plot_normalized_energy_range, plot_time_ranges,
                  ifo, event_time, id_string=gid, verbose=verbose, title=channel_name)
 
-    return event_time, q_value, individual_image_filenames, combined_image_filename
+    return event_time, individual_image_filenames, combined_image_filename
