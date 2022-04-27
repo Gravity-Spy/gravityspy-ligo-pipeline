@@ -1,0 +1,18 @@
+gravityspy\_ligo.table package
+==============================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   gravityspy_ligo.table.events
+
+Module contents
+---------------
+
+.. automodule:: gravityspy_ligo.table
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Classifying A Table of Events &mdash; gravityspy_ligo 0+untagged.1.gba8fda6 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/gravityspy_ligo-docs.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Running trainmodel on the command line" href="../trainmodel/index.html" />
+    <link rel="prev" title="Classify a Trigger With Gravity Spy" href="../classify/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> gravityspy_ligo
+          </a>
+              <div class="version">
+                0+untagged.1.gba8fda6
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install/index.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../classify/index.html">Classify a Trigger With Gravity Spy</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Classifying A Table of Events</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#a-table-of-events">A Table of Events</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../trainmodel/index.html">Running <code class="docutils literal notranslate"><span class="pre">trainmodel</span></code> on the command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Querying Gravity Spy data</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">gravityspy_ligo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Classifying A Table of Events</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/events/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="classifying-a-table-of-events">
+<span id="events"></span><h1>Classifying A Table of Events<a class="headerlink" href="#classifying-a-table-of-events" title="Permalink to this headline"></a></h1>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline"></a></h2>
+<p>Gravity Spy is designed to generally classify a while <em>table</em> of excess noise events at once.
+These <cite>events</cite> are then generally, although not always, uploaded to the Zooniverse website.
+In addition, these events are assumed to have originated from the Event Trigger Generator
+<em>Omicron</em>. With this in mind, the <code class="xref py py-mod docutils literal notranslate"><span class="pre">Events</span></code> class provides a host of methods
+that server as wrappers on tables of events to help with a varity of tasks described below.</p>
+</section>
+<section id="a-table-of-events">
+<h2>A Table of Events<a class="headerlink" href="#a-table-of-events" title="Permalink to this headline"></a></h2>
+<p>doing stuff</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">gwpy.timeseries</span> <span class="kn">import</span> <span class="n">TimeSeries</span>
+
+<span class="gp">In [2]: </span><span class="kn">from</span> <span class="nn">gravityspy_ligo.table</span> <span class="kn">import</span> <span class="n">Events</span>
+
+<span class="gp">In [3]: </span><span class="n">timeseries</span> <span class="o">=</span> <span class="n">TimeSeries</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;data/timeseries/L-L1_SOFTWAREINJ-1173197648-132.h5&#39;</span><span class="p">)</span>
+
+<span class="gp">In [4]: </span><span class="n">triggers</span> <span class="o">=</span> <span class="n">Events</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;data/omicron/L1-DCH_FAKE_STRAIN_16k_BBH-SEOBNRv3_OMICRON-1173188120-14996.xml.gz&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;ligolw&#39;</span><span class="p">)</span>
+
+<span class="gp">In [5]: </span><span class="n">results</span> <span class="o">=</span> <span class="n">triggers</span><span class="o">.</span><span class="n">classify</span><span class="p">(</span><span class="n">path_to_cnn</span><span class="o">=</span><span class="s1">&#39;../models/O3-multiview-classifer.h5&#39;</span><span class="p">,</span>
+<span class="gp">   ...: </span>                            <span class="n">timeseries</span><span class="o">=</span><span class="n">timeseries</span><span class="p">,</span> <span class="n">nproc</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">   ...: </span>
+
+<span class="gp">In [6]: </span><span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+<span class="go"> 1080Lines   1400Ripples  Air_Compressor ...     event_time         q_value     </span>
+<span class="go">------------ ------------ -------------- ... ----------------- -----------------</span>
+<span class="go"> 0.024179138 0.0077151563     0.12822469 ...   1173197715.3125 45.25483399593904</span>
+<span class="go">0.0076971943 0.0073990906    0.015058516 ...  1173197716.53125 45.25483399593904</span>
+<span class="go"> 0.010913197  0.005602566      0.0451206 ... 1173197717.328125 45.25483399593904</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../classify/index.html" class="btn btn-neutral float-left" title="Classify a Trigger With Gravity Spy" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../trainmodel/index.html" class="btn btn-neutral float-right" title="Running trainmodel on the command line" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Scott Coughlin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

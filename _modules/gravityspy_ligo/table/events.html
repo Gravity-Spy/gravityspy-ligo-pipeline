@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gravityspy_ligo.table.events &mdash; gravityspy_ligo 0+untagged.1.gba8fda6 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/gravityspy_ligo-docs.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> gravityspy_ligo
+          </a>
+              <div class="version">
+                0+untagged.1.gba8fda6
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install/index.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../classify/index.html">Classify a Trigger With Gravity Spy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../events/index.html">Classifying A Table of Events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../trainmodel/index.html">Running <code class="docutils literal notranslate"><span class="pre">trainmodel</span></code> on the command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Querying Gravity Spy data</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gravityspy_ligo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>gravityspy_ligo.table.events</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gravityspy_ligo.table.events</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1"># Copyright (C) Scott Coughlin (2017-)</span>
+<span class="c1">#</span>
+<span class="c1"># This file is part of gravityspy.</span>
+<span class="c1">#</span>
+<span class="c1"># gravityspy is free software: you can redistribute it and/or modify</span>
+<span class="c1"># it under the terms of the GNU General Public License as published by</span>
+<span class="c1"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c1"># (at your option) any later version.</span>
+<span class="c1">#</span>
+<span class="c1"># gravityspy is distributed in the hope that it will be useful,</span>
+<span class="c1"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c1"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c1"># GNU General Public License for more details.</span>
+<span class="c1">#</span>
+<span class="c1"># You should have received a copy of the GNU General Public License</span>
+<span class="c1"># along with gravityspy.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+<span class="kn">from</span> <span class="nn">gwtrigfind</span> <span class="kn">import</span> <span class="n">find_trigger_files</span>
+<span class="kn">from</span> <span class="nn">gwpy.segments</span> <span class="kn">import</span> <span class="n">DataQualityFlag</span>
+<span class="kn">from</span> <span class="nn">gwpy.table</span> <span class="kn">import</span> <span class="n">GravitySpyTable</span>
+<span class="kn">from</span> <span class="nn">gwpy.utils</span> <span class="kn">import</span> <span class="n">mp</span> <span class="k">as</span> <span class="n">mp_utils</span>
+<span class="kn">from</span> <span class="nn">gwpy.table.filter</span> <span class="kn">import</span> <span class="n">filter_table</span>
+<span class="kn">from</span> <span class="nn">gwpy.table.filters</span> <span class="kn">import</span> <span class="n">in_segmentlist</span>
+<span class="kn">from</span> <span class="nn">astropy.table</span> <span class="kn">import</span> <span class="n">Column</span>
+<span class="kn">from</span> <span class="nn">keras.models</span> <span class="kn">import</span> <span class="n">load_model</span>
+
+<span class="kn">from</span> <span class="nn">..utils</span> <span class="kn">import</span> <span class="n">log</span>
+<span class="kn">from</span> <span class="nn">..utils</span> <span class="kn">import</span> <span class="n">utils</span>
+<span class="kn">from</span> <span class="nn">..ml.train_classifier</span> <span class="kn">import</span> <span class="n">make_model</span>
+
+<span class="kn">import</span> <span class="nn">panoptes_client</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">pandas</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">string</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">h5py</span>
+
+<div class="viewcode-block" id="Events"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.Events">[docs]</a><span class="k">class</span> <span class="nc">Events</span><span class="p">(</span><span class="n">GravitySpyTable</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This class provides method for classifying events with gravityspy</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="Events.read"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.Events.read">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Classify triggers in this table</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            `gwpy.table.GravitySpyTable`</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            `Events` table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">etg</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;etg&#39;</span><span class="p">,</span> <span class="s1">&#39;OMICRON&#39;</span><span class="p">)</span>
+        <span class="n">tab</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Events</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">tab</span> <span class="o">=</span> <span class="n">tab</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s1">&#39;gravityspy_id&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tab</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;gravityspy_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tab</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">id_generator</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;image_status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;testing&#39;</span>
+            <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;data_quality&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="s1">&#39;no_flag&#39;</span>
+            <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;upload_flag&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;citizen_score&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;links_subjects&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;url1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> 
+            <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;url2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> 
+            <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;url3&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;url4&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> 
+
+        <span class="k">if</span> <span class="n">etg</span> <span class="o">==</span> <span class="s1">&#39;OMICRON&#39;</span><span class="p">:</span>
+            <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;event_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;event_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+            <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;process_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;process_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+        <span class="n">tab</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_pandas</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">etg</span> <span class="o">==</span> <span class="s1">&#39;OMICRON&#39;</span><span class="p">:</span>
+            <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">tab</span><span class="p">[</span><span class="s1">&#39;peak_time&#39;</span><span class="p">]</span> <span class="o">+</span>
+                                 <span class="p">(</span><span class="mf">0.000000001</span><span class="p">)</span><span class="o">*</span><span class="n">tab</span><span class="p">[</span><span class="s1">&#39;peak_time_ns&#39;</span><span class="p">])</span>
+            <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%.9f</span><span class="s1">&#39;</span>
+
+        <span class="k">return</span> <span class="n">tab</span></div>
+
+<div class="viewcode-block" id="Events.fetch"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.Events.fetch">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">tab</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Events</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Events.classify"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.Events.classify">[docs]</a>    <span class="k">def</span> <span class="nf">classify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_to_cnn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Classify triggers in this table</span>
+
+<span class="sd">        Parameters:</span>
+
+<span class="sd">            path_to_cnn:</span>
+<span class="sd">                file name of the CNN you would like to use</span>
+
+<span class="sd">            **kwargs:</span>
+<span class="sd">                nproc : number of parallel event times to be processing at once</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            `Events` table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s1">&#39;event_time&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;This method only works if you have defined &quot;</span>
+                             <span class="s2">&quot;a column event_time for your &quot;</span>
+                             <span class="s2">&quot;Event Trigger Generator.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Parse key word arguments</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;config&#39;</span><span class="p">,</span> <span class="n">utils</span><span class="o">.</span><span class="n">GravitySpyConfigFile</span><span class="p">())</span>
+        <span class="n">plot_directory</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;plot_directory&#39;</span><span class="p">,</span> <span class="s1">&#39;plots&#39;</span><span class="p">)</span>
+        <span class="n">timeseries</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;timeseries&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">channel_name</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;channel_name&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">frametype</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;frametype&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="c1"># calculate maximum number of processes</span>
+        <span class="n">nproc</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;nproc&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># make a list of event times</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;ifo&#39;</span><span class="p">],</span>
+                     <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;gravityspy_id&#39;</span><span class="p">])</span>
+
+        <span class="n">inputs</span> <span class="o">=</span> <span class="p">((</span><span class="n">etime</span><span class="p">,</span> <span class="n">ifo</span><span class="p">,</span> <span class="n">gid</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">plot_directory</span><span class="p">,</span>
+                   <span class="n">timeseries</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">channel_name</span><span class="p">,</span> <span class="n">frametype</span><span class="p">,</span> <span class="n">nproc</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+                  <span class="k">for</span> <span class="n">etime</span><span class="p">,</span> <span class="n">ifo</span><span class="p">,</span> <span class="n">gid</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">)</span>
+
+        <span class="c1"># make q_scans</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">mp_utils</span><span class="o">.</span><span class="n">multiprocess_with_queues</span><span class="p">(</span><span class="n">nproc</span><span class="p">,</span>
+                                                   <span class="n">_make_single_qscan</span><span class="p">,</span>
+                                                   <span class="n">inputs</span><span class="p">)</span>
+
+        <span class="n">qvalues</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># raise exceptions (from multiprocessing, single process raises inline)</span>
+        <span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">output</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">):</span>
+                <span class="n">x</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Failed to make q scan at time </span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">f</span><span class="p">,</span>
+                                                                    <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)),)</span>
+                <span class="k">raise</span> <span class="n">x</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">qvalues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;q_value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">qvalues</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">label_q_scans</span><span class="p">(</span><span class="n">plot_directory</span><span class="o">=</span><span class="n">plot_directory</span><span class="p">,</span>
+                                      <span class="n">path_to_cnn</span><span class="o">=</span><span class="n">path_to_cnn</span><span class="p">,</span>
+                                      <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+                                      <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+        <span class="n">results</span><span class="p">[</span><span class="s1">&#39;Filename1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;Filename1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+                                                          <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">plot_directory</span><span class="p">,))</span>
+        <span class="n">results</span><span class="p">[</span><span class="s1">&#39;Filename2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;Filename2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+                                                          <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">plot_directory</span><span class="p">,))</span>
+        <span class="n">results</span><span class="p">[</span><span class="s1">&#39;Filename3&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;Filename3&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+                                                          <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">plot_directory</span><span class="p">,))</span>
+        <span class="n">results</span><span class="p">[</span><span class="s1">&#39;Filename4&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;Filename4&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+                                                          <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">plot_directory</span><span class="p">,))</span>
+
+
+        <span class="n">results</span> <span class="o">=</span> <span class="n">Events</span><span class="o">.</span><span class="n">from_pandas</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">(),</span>
+                                                   <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;gravityspy_id&#39;</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">results</span></div>
+
+<div class="viewcode-block" id="Events.to_sql"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.Events.to_sql">[docs]</a>    <span class="k">def</span> <span class="nf">to_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="s1">&#39;glitches_v2d0&#39;</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;append&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Obtain omicron triggers to run gravityspy on</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            table (str): name of SQL table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">sqlalchemy.engine</span> <span class="kn">import</span> <span class="n">create_engine</span>
+        <span class="c1"># connect if needed</span>
+        <span class="k">if</span> <span class="n">engine</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">conn_kw</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;db&#39;</span><span class="p">,</span> <span class="s1">&#39;host&#39;</span><span class="p">,</span> <span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;passwd&#39;</span><span class="p">,</span> <span class="s1">&#39;server&#39;</span><span class="p">,</span> <span class="s1">&#39;port&#39;</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">conn_kw</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="n">engine</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span><span class="n">get_connection_str</span><span class="p">(</span><span class="o">**</span><span class="n">conn_kw</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">engine</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="n">if_exists</span><span class="p">)</span>
+        <span class="n">engine</span><span class="o">.</span><span class="n">dispose</span><span class="p">()</span>
+        <span class="k">return</span></div>
+
+<div class="viewcode-block" id="Events.to_glitch_db"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.Events.to_glitch_db">[docs]</a>    <span class="k">def</span> <span class="nf">to_glitch_db</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="s1">&#39;GSMetadata&#39;</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Obtain omicron triggers to run gravityspy on</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            table (str): name of SQL table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">sqlalchemy.engine</span> <span class="kn">import</span> <span class="n">create_engine</span>
+
+        <span class="n">tab</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+        <span class="k">def</span> <span class="nf">makelink</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="c1"># This horrendous thing obtains the public html path for image</span>
+            <span class="n">intermediate_path</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">Filename1</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">))[</span><span class="mi">3</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ifo</span> <span class="o">==</span> <span class="s1">&#39;L1&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s1">&#39;https://ldas-jobs.ligo-la.caltech.edu/~gravityspy/</span><span class="si">{0}</span><span class="s1">/</span><span class="si">{1}</span><span class="s1">.png&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">intermediate_path</span><span class="p">,</span><span class="n">x</span><span class="o">.</span><span class="n">gravityspy_id</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">x</span><span class="o">.</span><span class="n">ifo</span> <span class="o">==</span> <span class="s1">&#39;V1&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s1">&#39;https://ldas-jobs.ligo.caltech.edu/~gravityspy/</span><span class="si">{0}</span><span class="s1">/</span><span class="si">{1}</span><span class="s1">.png&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">intermediate_path</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">gravityspy_id</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s1">&#39;https://ldas-jobs.ligo-wa.caltech.edu/~gravityspy/</span><span class="si">{0}</span><span class="s1">/</span><span class="si">{1}</span><span class="s1">.png&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">intermediate_path</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">gravityspy_id</span><span class="p">)</span>
+
+        <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;imgUrl&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tab</span><span class="p">[[</span><span class="s1">&#39;ifo&#39;</span><span class="p">,</span> <span class="s1">&#39;gravityspy_id&#39;</span><span class="p">,</span> <span class="s1">&#39;Filename1&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">makelink</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;pipeline&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;GravitySpy&#39;</span>
+        <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;flag&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># Get the right columns for glitch db from all the available colums</span>
+        <span class="n">tab</span> <span class="o">=</span> <span class="n">tab</span><span class="p">[[</span><span class="s1">&#39;gravityspy_id&#39;</span><span class="p">,</span><span class="s1">&#39;ifo&#39;</span><span class="p">,</span><span class="s1">&#39;ml_label&#39;</span><span class="p">,</span> <span class="s1">&#39;imgUrl&#39;</span><span class="p">,</span> <span class="s1">&#39;snr&#39;</span><span class="p">,</span> <span class="s1">&#39;amplitude&#39;</span><span class="p">,</span><span class="s1">&#39;peak_frequency&#39;</span><span class="p">,</span><span class="s1">&#39;central_freq&#39;</span><span class="p">,</span><span class="s1">&#39;duration&#39;</span><span class="p">,</span><span class="s1">&#39;bandwidth&#39;</span><span class="p">,</span><span class="s1">&#39;chisq&#39;</span><span class="p">,</span><span class="s1">&#39;chisq_dof&#39;</span><span class="p">,</span><span class="s1">&#39;event_time&#39;</span><span class="p">,</span><span class="s1">&#39;ml_confidence&#39;</span><span class="p">,</span> <span class="s1">&#39;image_status&#39;</span><span class="p">,</span> <span class="s1">&#39;pipeline&#39;</span><span class="p">,</span> <span class="s1">&#39;citizen_score&#39;</span><span class="p">,</span> <span class="s1">&#39;flag&#39;</span><span class="p">,</span> <span class="s1">&#39;data_quality&#39;</span><span class="p">,</span> <span class="s1">&#39;q_value&#39;</span><span class="p">]]</span>
+        <span class="n">tab</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;ifo&#39;</span><span class="p">,</span> <span class="s1">&#39;label&#39;</span><span class="p">,</span> <span class="s1">&#39;imgUrl&#39;</span><span class="p">,</span> <span class="s1">&#39;snr&#39;</span><span class="p">,</span> <span class="s1">&#39;amplitude&#39;</span><span class="p">,</span> <span class="s1">&#39;peakFreq&#39;</span><span class="p">,</span> <span class="s1">&#39;centralFreq&#39;</span><span class="p">,</span> <span class="s1">&#39;duration&#39;</span><span class="p">,</span> <span class="s1">&#39;bandwidth&#39;</span><span class="p">,</span> <span class="s1">&#39;chisq&#39;</span><span class="p">,</span> <span class="s1">&#39;chisqDof&#39;</span><span class="p">,</span> <span class="s1">&#39;GPStime&#39;</span><span class="p">,</span><span class="s1">&#39;confidence&#39;</span><span class="p">,</span> <span class="s1">&#39;imageStatus&#39;</span><span class="p">,</span> <span class="s1">&#39;pipeline&#39;</span><span class="p">,</span> <span class="s1">&#39;citizenScore&#39;</span><span class="p">,</span> <span class="s1">&#39;flag&#39;</span><span class="p">,</span> <span class="s1">&#39;dqflag&#39;</span><span class="p">,</span> <span class="s1">&#39;qvalue&#39;</span><span class="p">]</span>
+
+        <span class="c1"># connect if needed</span>
+        <span class="k">if</span> <span class="n">engine</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">conn_kw</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;db&#39;</span><span class="p">,</span> <span class="s1">&#39;host&#39;</span><span class="p">,</span> <span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;passwd&#39;</span><span class="p">,</span> <span class="s1">&#39;server&#39;</span><span class="p">,</span> <span class="s1">&#39;port&#39;</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">conn_kw</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="n">engine</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span><span class="n">get_connection_str</span><span class="p">(</span><span class="o">**</span><span class="n">conn_kw</span><span class="p">))</span>
+
+        <span class="n">tab</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="n">con</span><span class="o">=</span><span class="n">engine</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">table</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;append&#39;</span><span class="p">,</span>
+                   <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">chunksize</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+        <span class="n">engine</span><span class="o">.</span><span class="n">dispose</span><span class="p">()</span>
+        <span class="k">return</span></div>
+
+<div class="viewcode-block" id="Events.update_sql"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.Events.update_sql">[docs]</a>    <span class="k">def</span> <span class="nf">update_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="s1">&#39;glitches_v2d0&#39;</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Obtain omicron triggers to run gravityspy on</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            table (str): name of SQL tabl</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">sqlalchemy.engine</span> <span class="kn">import</span> <span class="n">create_engine</span>
+        <span class="c1"># connect if needed</span>
+        <span class="k">if</span> <span class="n">engine</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">conn_kw</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;db&#39;</span><span class="p">,</span> <span class="s1">&#39;host&#39;</span><span class="p">,</span> <span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;passwd&#39;</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">conn_kw</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="n">engine</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span><span class="n">get_connection_str</span><span class="p">(</span><span class="o">**</span><span class="n">conn_kw</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="n">table</span><span class="o">=</span><span class="s1">&#39;tmp_new_label&#39;</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">conn_kw</span><span class="p">)</span>
+        <span class="n">sql_command</span> <span class="o">=</span> <span class="s1">&#39;UPDATE </span><span class="si">{0}</span><span class="s1"> SET ml_label = tmp_new_label.ml_label, ml_confidence = tmp_new_label.ml_confidence FROM tmp_new_label WHERE tmp_new_label.gravityspy_id = </span><span class="si">{0}</span><span class="s1">.gravityspy_id&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+        <span class="n">engine</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql_command</span><span class="p">)</span>
+        <span class="n">engine</span><span class="o">.</span><span class="n">dispose</span><span class="p">()</span>
+        <span class="k">return</span></div>
+
+<div class="viewcode-block" id="Events.update_ldvw"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.Events.update_ldvw">[docs]</a>    <span class="k">def</span> <span class="nf">update_ldvw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="s1">&#39;GSMetadata&#39;</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Obtain omicron triggers to run gravityspy on</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            table (str): name of SQL tabl</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">sqlalchemy.engine</span> <span class="kn">import</span> <span class="n">create_engine</span>
+        <span class="c1"># connect if needed</span>
+        <span class="k">if</span> <span class="n">engine</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">conn_kw</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;db&#39;</span><span class="p">,</span> <span class="s1">&#39;host&#39;</span><span class="p">,</span> <span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;passwd&#39;</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">conn_kw</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="n">engine</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span><span class="n">get_connection_str</span><span class="p">(</span><span class="o">**</span><span class="n">conn_kw</span><span class="p">))</span>
+
+        <span class="n">tab</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+        <span class="c1"># Get the right columns for glitch db from all the available colums</span>
+        <span class="n">tab</span> <span class="o">=</span> <span class="n">tab</span><span class="p">[[</span><span class="s1">&#39;gravityspy_id&#39;</span><span class="p">,</span> <span class="s1">&#39;ml_label&#39;</span><span class="p">,</span> <span class="s1">&#39;ml_confidence&#39;</span><span class="p">]]</span>
+        <span class="n">tab</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;label&#39;</span><span class="p">,</span> <span class="s1">&#39;confidence&#39;</span><span class="p">]</span>
+
+        <span class="n">ientry</span> <span class="o">=</span> <span class="n">tab</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s1">&#39;records&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">column_dict</span> <span class="ow">in</span> <span class="n">ientry</span><span class="p">:</span>
+            <span class="n">sql_command</span> <span class="o">=</span> <span class="s1">&#39;UPDATE </span><span class="si">{0}</span><span class="s1"> SET &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="n">column_dict</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">column_name</span> <span class="o">==</span> <span class="s1">&#39;id&#39;</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">column_dict</span><span class="p">[</span><span class="n">column_name</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="n">sql_command</span> <span class="o">=</span> <span class="n">sql_command</span> <span class="o">+</span> <span class="s1">&#39;&#39;&#39;</span><span class="si">{0}</span><span class="s1"> = </span><span class="se">\&#39;</span><span class="si">{1}</span><span class="se">\&#39;</span><span class="s1">, &#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">column_name</span><span class="p">,</span> <span class="n">column_dict</span><span class="p">[</span><span class="n">column_name</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">sql_command</span> <span class="o">=</span> <span class="n">sql_command</span> <span class="o">+</span> <span class="s1">&#39;&#39;&#39;</span><span class="si">{0}</span><span class="s1"> = </span><span class="si">{1}</span><span class="s1">, &#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">column_name</span><span class="p">,</span> <span class="n">column_dict</span><span class="p">[</span><span class="n">column_name</span><span class="p">])</span>
+            <span class="n">sql_command</span> <span class="o">=</span> <span class="n">sql_command</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39; WHERE id = </span><span class="se">\&#39;</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">column_dict</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;&#39;&quot;</span>
+            <span class="n">engine</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql_command</span><span class="p">)</span>
+        <span class="n">engine</span><span class="o">.</span><span class="n">dispose</span><span class="p">()</span>
+        <span class="k">return</span></div>
+
+<div class="viewcode-block" id="Events.upload_to_zooniverse"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.Events.upload_to_zooniverse">[docs]</a>    <span class="k">def</span> <span class="nf">upload_to_zooniverse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subject_set_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="s1">&#39;1104&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Obtain omicron triggers to run gravityspy on</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            subject_set_id (optional, int) : subject set id to upload to</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            `Events` table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">itercols</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="s1">&#39;SU&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">replace_column</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;object&#39;</span><span class="p">))</span>
+        <span class="c1"># First filter out images that have already been uploaded</span>
+        <span class="n">tab</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;upload_flag&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># If you want a specific subject set to be uploaded to then the</span>
+        <span class="c1"># subjectset column will be updated to reflect which one you want</span>
+        <span class="k">if</span> <span class="n">subject_set_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tab</span><span class="p">[</span><span class="s1">&#39;subjectset&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">subject_set_id</span>
+
+        <span class="k">if</span> <span class="n">subject_set_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">subset_ids</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">tab</span><span class="p">[</span><span class="s1">&#39;subjectset&#39;</span><span class="p">]))</span> 
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">subset_ids</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">subject_set_id</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">subset_id</span> <span class="ow">in</span> <span class="n">subset_ids</span><span class="p">:</span>
+            <span class="n">subjectset</span> <span class="o">=</span> <span class="n">panoptes_client</span><span class="o">.</span><span class="n">SubjectSet</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">subset_id</span><span class="p">)</span>
+            <span class="n">subjects</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="n">tab1</span> <span class="o">=</span> <span class="n">tab</span><span class="p">[</span><span class="n">tab</span><span class="p">[</span><span class="s1">&#39;subjectset&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">subset_id</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">fn1</span><span class="p">,</span> <span class="n">fn2</span><span class="p">,</span> <span class="n">fn3</span><span class="p">,</span> <span class="n">fn4</span><span class="p">,</span> <span class="n">gid</span><span class="p">,</span> <span class="n">qval</span> <span class="ow">in</span> <span class="n">tab1</span><span class="p">[</span><span class="s1">&#39;Filename1&#39;</span><span class="p">,</span> <span class="s1">&#39;Filename2&#39;</span><span class="p">,</span> <span class="s1">&#39;Filename3&#39;</span><span class="p">,</span> <span class="s1">&#39;Filename4&#39;</span><span class="p">,</span> <span class="s1">&#39;gravityspy_id&#39;</span><span class="p">,</span> <span class="s1">&#39;q_value&#39;</span><span class="p">]:</span>
+                <span class="n">subject</span> <span class="o">=</span> <span class="n">panoptes_client</span><span class="o">.</span><span class="n">Subject</span><span class="p">()</span>
+                <span class="n">subject</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">project</span> <span class="o">=</span> <span class="n">project</span>
+                <span class="n">subject</span><span class="o">.</span><span class="n">add_location</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">fn1</span><span class="p">))</span>
+                <span class="n">subject</span><span class="o">.</span><span class="n">add_location</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">fn2</span><span class="p">))</span>
+                <span class="n">subject</span><span class="o">.</span><span class="n">add_location</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">fn3</span><span class="p">))</span>
+                <span class="n">subject</span><span class="o">.</span><span class="n">add_location</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">fn4</span><span class="p">))</span>
+                <span class="n">subject</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;20180825&#39;</span>
+                <span class="n">subject</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;subject_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">gid</span><span class="p">)</span>
+                <span class="n">subject</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;Filename1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fn1</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">subject</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;Filename2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fn2</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">subject</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;Filename3&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fn3</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">subject</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;Filename4&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fn4</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">subject</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;q_value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">qval</span><span class="p">)</span>
+                <span class="n">subject</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+                <span class="n">subjects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subject</span><span class="p">)</span>
+                <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;links_subjects&#39;</span><span class="p">][</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;gravityspy_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">gid</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">subject</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+                <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;url1&#39;</span><span class="p">][</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;gravityspy_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">gid</span><span class="p">]</span> <span class="o">=</span> <span class="n">subject</span><span class="o">.</span><span class="n">raw</span><span class="p">[</span><span class="s1">&#39;locations&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;image/png&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;?&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;url2&#39;</span><span class="p">][</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;gravityspy_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">gid</span><span class="p">]</span> <span class="o">=</span> <span class="n">subject</span><span class="o">.</span><span class="n">raw</span><span class="p">[</span><span class="s1">&#39;locations&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;image/png&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;?&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;url3&#39;</span><span class="p">][</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;gravityspy_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">gid</span><span class="p">]</span> <span class="o">=</span> <span class="n">subject</span><span class="o">.</span><span class="n">raw</span><span class="p">[</span><span class="s1">&#39;locations&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">][</span><span class="s1">&#39;image/png&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;?&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;url4&#39;</span><span class="p">][</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;gravityspy_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">gid</span><span class="p">]</span> <span class="o">=</span> <span class="n">subject</span><span class="o">.</span><span class="n">raw</span><span class="p">[</span><span class="s1">&#39;locations&#39;</span><span class="p">][</span><span class="mi">3</span><span class="p">][</span><span class="s1">&#39;image/png&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;?&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;upload_flag&#39;</span><span class="p">][</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;gravityspy_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">gid</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">subjectset</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">subjects</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="Events.update_scores"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.Events.update_scores">[docs]</a>    <span class="k">def</span> <span class="nf">update_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_to_cnn</span><span class="p">,</span> <span class="n">nproc</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Obtain omicron triggers to run gravityspy on</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            path_to_cnn (str): filename of model</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            `Events` table with columns containing new scores</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">elem</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;Filename1&#39;</span><span class="p">,</span> <span class="s1">&#39;Filename2&#39;</span><span class="p">,</span>
+                                                    <span class="s1">&#39;Filename3&#39;</span><span class="p">,</span> <span class="s1">&#39;Filename4&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;This method only works if the file paths &quot;</span>
+                             <span class="s2">&quot;of the images of the images are known.&quot;</span><span class="p">)</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">label_select_images</span><span class="p">(</span><span class="n">filename1</span><span class="o">=</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;Filename1&#39;</span><span class="p">],</span>
+                                            <span class="n">filename2</span><span class="o">=</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;Filename2&#39;</span><span class="p">],</span>
+                                            <span class="n">filename3</span><span class="o">=</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;Filename3&#39;</span><span class="p">],</span>
+                                            <span class="n">filename4</span><span class="o">=</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;Filename4&#39;</span><span class="p">],</span>
+                                            <span class="n">path_to_cnn</span><span class="o">=</span><span class="n">path_to_cnn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+
+        <span class="k">return</span> <span class="n">Events</span><span class="p">(</span><span class="n">results</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Events.update_features"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.Events.update_features">[docs]</a>    <span class="k">def</span> <span class="nf">update_features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_to_semantic_model</span><span class="p">,</span> <span class="n">nproc</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Obtain omicron triggers to run gravityspy on</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            path_to_semantic_model (str): filename of model</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            `Events` table with columns containing new scores</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">elem</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;Filename1&#39;</span><span class="p">,</span> <span class="s1">&#39;Filename2&#39;</span><span class="p">,</span>
+                                                    <span class="s1">&#39;Filename3&#39;</span><span class="p">,</span> <span class="s1">&#39;Filename4&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;This method only works if the file paths &quot;</span>
+                             <span class="s2">&quot;of the images of the images are known.&quot;</span><span class="p">)</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_features_select_images</span><span class="p">(</span><span class="n">filename1</span><span class="o">=</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;Filename1&#39;</span><span class="p">],</span>
+                                            <span class="n">filename2</span><span class="o">=</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;Filename2&#39;</span><span class="p">],</span>
+                                            <span class="n">filename3</span><span class="o">=</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;Filename3&#39;</span><span class="p">],</span>
+                                            <span class="n">filename4</span><span class="o">=</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;Filename4&#39;</span><span class="p">],</span>
+                                            <span class="n">path_to_semantic_model</span><span class="o">=</span><span class="n">path_to_semantic_model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Events</span><span class="p">(</span><span class="n">results</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Events.create_collection"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.Events.create_collection">[docs]</a>    <span class="k">def</span> <span class="nf">create_collection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">private</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                          <span class="n">default_subject</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Obtain omicron triggers to run gravityspy on</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            name (str, optional):</span>
+<span class="sd">                name of collection</span>
+<span class="sd">            private (bool, optional):</span>
+<span class="sd">                would you like this collection to be private or public</span>
+<span class="sd">            default_subject (int, optional):</span>
+<span class="sd">                subject id to be the cover image of collection</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            `str` url link to the created collection</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># will name it after the label of event table</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;Label&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">default_subject</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">default_subject</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;links_subjects&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">collection_url</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;https://www.zooniverse.org/&#39;</span>
+                          <span class="s1">&#39;projects/zooniverse/gravity-spy/collections/&#39;</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">panoptes_client</span><span class="o">.</span><span class="n">Panoptes</span><span class="p">()</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+            <span class="n">client</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+
+            <span class="n">collection</span> <span class="o">=</span> <span class="n">panoptes_client</span><span class="o">.</span><span class="n">Collection</span><span class="p">()</span>
+            <span class="n">collection</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">project</span> <span class="o">=</span> <span class="s1">&#39;1104&#39;</span>
+            <span class="n">collection</span><span class="o">.</span><span class="n">display_name</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">collection</span><span class="o">.</span><span class="n">private</span> <span class="o">=</span> <span class="n">private</span>
+            <span class="n">urltmp</span> <span class="o">=</span> <span class="n">collection</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+            <span class="n">collection_url</span> <span class="o">=</span> <span class="n">collection_url</span> <span class="o">+</span> <span class="n">urltmp</span><span class="p">[</span><span class="s1">&#39;collections&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;slug&#39;</span><span class="p">]</span>
+            <span class="n">collection</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;links_subjects&#39;</span><span class="p">]))</span>
+            <span class="n">collection</span><span class="o">.</span><span class="n">set_default_subject</span><span class="p">(</span><span class="n">default_subject</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">collection_url</span></div>
+
+<div class="viewcode-block" id="Events.cluster"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.Events.cluster">[docs]</a>    <span class="k">def</span> <span class="nf">cluster</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nclusters</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create new clusters from feature space vectors</span>
+
+<span class="sd">        Parameters:</span>
+
+<span class="sd">            nclusters (int): how many clusters to try to group</span>
+<span class="sd">                these triggers into</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            `Events` table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s1">&#39;0&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;You are trying to cluster but you do not have &quot;</span>
+                             <span class="s2">&quot;the feature space information in this table.&quot;</span><span class="p">)</span>
+
+        <span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">200</span><span class="p">]</span>
+        <span class="n">kmeans_1</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">nclusters</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+        <span class="n">clusters</span> <span class="o">=</span> <span class="n">kmeans_1</span><span class="o">.</span><span class="n">labels_</span>
+        <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">clusters</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="Events.get_triggers"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.Events.get_triggers">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_triggers</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span>
+                     <span class="n">dqflag</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Obtain omicron triggers to run gravityspy on</span>
+
+<span class="sd">        Parameters:</span>
+
+<span class="sd">            start (int): start of time to look for triggers</span>
+<span class="sd">            end (int): end time to look for triggers</span>
+<span class="sd">            channel (str): channel to look for triggers</span>
+<span class="sd">            dqflag (str): name of segment during which to keep triggers</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            `Events` table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">duration_max</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;duration_max&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">duration_min</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;duration_min&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">frequency_max</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;frequency_max&#39;</span><span class="p">,</span> <span class="mi">2048</span><span class="p">)</span>
+        <span class="n">frequency_min</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;frequency_min&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="n">snr_max</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;snr_max&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">snr_min</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;snr_min&#39;</span><span class="p">,</span> <span class="mf">7.5</span><span class="p">)</span>
+
+        <span class="n">detector</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">logger</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">Logger</span><span class="p">(</span><span class="s1">&#39;Gravity Spy: Fetching Omicron Triggers&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Obtain segments that are analysis ready</span>
+        <span class="n">analysis_ready</span> <span class="o">=</span> <span class="n">DataQualityFlag</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">:</span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">detector</span><span class="p">,</span>
+                                                                <span class="n">dqflag</span><span class="p">),</span>
+                                              <span class="nb">float</span><span class="p">(</span><span class="n">start</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">end</span><span class="p">))</span>
+
+        <span class="c1"># Display segments for which this flag is true</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Segments for which the </span><span class="si">{0}</span><span class="s2"> Flag &quot;</span>
+                    <span class="s2">&quot;is active: </span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dqflag</span><span class="p">,</span> <span class="n">analysis_ready</span><span class="o">.</span><span class="n">active</span><span class="p">))</span>
+
+        <span class="c1"># get Omicron triggers</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="n">find_trigger_files</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span><span class="s1">&#39;Omicron&#39;</span><span class="p">,</span>
+                                   <span class="nb">float</span><span class="p">(</span><span class="n">start</span><span class="p">),</span><span class="nb">float</span><span class="p">(</span><span class="n">end</span><span class="p">))</span>
+
+        <span class="n">triggers</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">tablename</span><span class="o">=</span><span class="s1">&#39;sngl_burst&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;ligolw&#39;</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Number of triggers &quot;</span>
+                    <span class="s2">&quot;before any filtering: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">triggers</span><span class="p">)))</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;duration filter &quot;</span>
+                    <span class="s2">&quot;[</span><span class="si">{0}</span><span class="s2">, </span><span class="si">{1}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">duration_min</span><span class="p">,</span> <span class="n">duration_max</span><span class="p">))</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;frequency filter &quot;</span>
+                    <span class="s2">&quot;[</span><span class="si">{0}</span><span class="s2">, </span><span class="si">{1}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">frequency_min</span><span class="p">,</span> <span class="n">frequency_max</span><span class="p">))</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;snr filter &quot;</span>
+                    <span class="s2">&quot;[</span><span class="si">{0}</span><span class="s2">, </span><span class="si">{1}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">snr_min</span><span class="p">,</span> <span class="n">snr_max</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">duration_max</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">triggers</span> <span class="o">=</span> <span class="n">triggers</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="s1">&#39;duration &lt;= </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">duration_max</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">duration_min</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">triggers</span> <span class="o">=</span> <span class="n">triggers</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="s1">&#39;duration &gt;= </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">duration_min</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">frequency_max</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">triggers</span> <span class="o">=</span> <span class="n">triggers</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="s1">&#39;peak_frequency &lt;= </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">frequency_max</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">frequency_min</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">triggers</span> <span class="o">=</span> <span class="n">triggers</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="s1">&#39;peak_frequency &gt;= </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">frequency_min</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">snr_max</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">triggers</span> <span class="o">=</span> <span class="n">triggers</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="s1">&#39;snr &lt;= </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">snr_max</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">snr_min</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">triggers</span> <span class="o">=</span> <span class="n">triggers</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="s1">&#39;snr &gt;= </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">snr_min</span><span class="p">))</span>
+
+        <span class="c1"># Set peakGPS</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Number of triggers after &quot;</span>
+                    <span class="s2">&quot;snr, frequency, and duration filters &quot;</span>
+                    <span class="s2">&quot;cuts but before </span><span class="si">{0}</span><span class="s2"> flag filtering: &quot;</span>
+                    <span class="s2">&quot;</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dqflag</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">triggers</span><span class="p">)))</span>
+
+        <span class="c1"># Filter the raw omicron triggers against the ANALYSIS READY flag.</span>
+        <span class="n">triggers</span> <span class="o">=</span> <span class="n">filter_table</span><span class="p">(</span><span class="n">triggers</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;event_time&#39;</span><span class="p">,</span> <span class="n">in_segmentlist</span><span class="p">,</span> <span class="n">analysis_ready</span><span class="o">.</span><span class="n">active</span><span class="p">))</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Final trigger length: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">triggers</span><span class="p">)))</span>
+
+        <span class="k">return</span> <span class="n">triggers</span></div>
+
+<div class="viewcode-block" id="Events.create_sub"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.Events.create_sub">[docs]</a>    <span class="k">def</span> <span class="nf">create_sub</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel_name</span><span class="p">,</span> <span class="n">frame_type</span><span class="p">,</span>
+                   <span class="n">path_to_cnn</span><span class="p">,</span> <span class="n">plot_directory</span><span class="p">,</span>
+                   <span class="n">delete_images</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                   <span class="n">subfile_name</span><span class="o">=</span><span class="s1">&#39;gravityspy.sub&#39;</span><span class="p">,</span>
+                   <span class="n">accounting_group_user</span><span class="o">=</span><span class="s1">&#39;scott.coughlin&#39;</span><span class="p">,</span>
+                   <span class="n">accounting_group</span><span class="o">=</span><span class="s1">&#39;ligo.dev.o1.detchar.ch_categorization.glitchzoo&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a dag file to process all events in table</span>
+
+<span class="sd">        Parameters:</span>
+
+<span class="sd">            nclusters (int): how many clusters to try to group</span>
+<span class="sd">                these triggers into</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            `Events` table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Determine location of executables</span>
+        <span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">([</span><span class="s1">&#39;which&#39;</span><span class="p">,</span> <span class="s1">&#39;wscan&#39;</span><span class="p">],</span>
+                                <span class="n">stdin</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
+                                <span class="n">stdout</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
+                                <span class="n">stderr</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span>
+                                <span class="p">)</span>
+        <span class="p">(</span><span class="n">path_to_wscan</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">path_to_wscan</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot locate wscan executable in your path&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;logs&#39;</span><span class="p">,</span> <span class="s1">&#39;condor&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">subfile_name</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">subfile</span><span class="p">:</span>
+            <span class="n">subfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;universe = vanilla</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">subfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;executable = </span><span class="si">{0}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path_to_wscan</span><span class="p">)))</span>
+            <span class="n">subfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">delete_images</span><span class="p">:</span>
+                <span class="n">subfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;arguments = &quot;--channel-name </span><span class="si">{0}</span><span class="s1"> &#39;</span>
+                              <span class="s1">&#39;--frametype </span><span class="si">{1}</span><span class="s1"> &#39;</span>
+                              <span class="s1">&#39;--event-time $(event_time) &#39;</span>
+                              <span class="s1">&#39;--plot-directory </span><span class="si">{2}</span><span class="s1"> --hdf5 &#39;</span>
+                              <span class="s1">&#39;--path-to-cnn-model </span><span class="si">{3}</span><span class="s1"> &#39;</span>
+                              <span class="s1">&#39;--delete-images&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">channel_name</span><span class="p">,</span>
+                                                          <span class="n">frame_type</span><span class="p">,</span>
+                                                          <span class="n">plot_directory</span><span class="p">,</span>
+                                                          <span class="n">path_to_cnn</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">subfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;arguments = &quot;--channel-name </span><span class="si">{0}</span><span class="s1"> &#39;</span>
+                              <span class="s1">&#39;--frametype </span><span class="si">{1}</span><span class="s1"> &#39;</span>
+                              <span class="s1">&#39;--event-time $(event_time) &#39;</span>
+                              <span class="s1">&#39;--plot-directory </span><span class="si">{2}</span><span class="s1"> --hdf5 &#39;</span>
+                              <span class="s1">&#39;--path-to-cnn-model </span><span class="si">{3}</span><span class="s1">&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">channel_name</span><span class="p">,</span>
+                                                                <span class="n">frame_type</span><span class="p">,</span>
+                                                                <span class="n">plot_directory</span><span class="p">,</span>
+                                                                <span class="n">path_to_cnn</span><span class="p">))</span>
+            <span class="n">subfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;getEnv=True</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">subfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">subfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;accounting_group_user = </span><span class="si">{0}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">accounting_group_user</span><span class="p">))</span>
+            <span class="n">subfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;accounting_group = </span><span class="si">{0}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">accounting_group</span><span class="p">))</span>
+            <span class="n">subfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">subfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;priority = 0</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">subfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;request_memory = 5000</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">subfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">subfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;error = logs/gravityspy-$(jobNumber).err</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">subfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;output = logs/gravityspy-$(jobNumber).out</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">subfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;notification = Error</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">subfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;queue 1&#39;</span><span class="p">)</span>
+            <span class="n">subfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Events.create_dag"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.Events.create_dag">[docs]</a>    <span class="k">def</span> <span class="nf">create_dag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subfile_name</span><span class="o">=</span><span class="s1">&#39;gravityspy.sub&#39;</span><span class="p">,</span> <span class="n">retry_number</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a dag file to process all events in table</span>
+
+<span class="sd">        Parameters:</span>
+
+<span class="sd">            nclusters (int): how many clusters to try to group</span>
+<span class="sd">                these triggers into</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            `Events` table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;gravityspy_</span><span class="si">{0}</span><span class="s1">_</span><span class="si">{1}</span><span class="s1">.dag&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;peak_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span>
+                                                  <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;peak_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span><span class="s1">&#39;a+&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">dagfile</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">peak_time</span><span class="p">,</span> <span class="n">peak_time_ns</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">event_time</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;peak_time&#39;</span><span class="p">],</span>
+                                                                     <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;peak_time_ns&#39;</span><span class="p">],</span>
+                                                                     <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;event_id&#39;</span><span class="p">],</span>
+                                                                     <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">]):</span>
+                <span class="n">job_number</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0}{1}{2}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">peak_time</span><span class="p">,</span> <span class="n">peak_time_ns</span><span class="p">,</span> <span class="n">event_id</span><span class="p">)</span>
+                <span class="n">dagfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;JOB </span><span class="si">{0}</span><span class="s1"> </span><span class="si">{1}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">job_number</span><span class="p">,</span> <span class="n">subfile_name</span><span class="p">))</span>
+                <span class="n">dagfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;RETRY </span><span class="si">{0}</span><span class="s1"> </span><span class="si">{1}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">job_number</span><span class="p">,</span> <span class="n">retry_number</span><span class="p">))</span>
+                <span class="n">dagfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;VARS </span><span class="si">{0}</span><span class="s1"> jobNumber=&quot;</span><span class="si">{0}</span><span class="s1">&quot; event_time=&quot;</span><span class="si">{1}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">job_number</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">event_time</span><span class="p">)))</span>
+                <span class="n">dagfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Events.relabel_sample"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.Events.relabel_sample">[docs]</a>    <span class="k">def</span> <span class="nf">relabel_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_to_cnn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This assumes you fetch image data from test_storing_image</span>
+
+<span class="sd">            Parameters:</span>
+<span class="sd">                path_to_cnn (`str`): path to file with weights of trained model</span>
+
+<span class="sd">                **kwargs: anything you can pass to keras.model.predict_proba</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># first convert to pandas</span>
+        <span class="kn">import</span> <span class="nn">io</span>
+        <span class="k">def</span> <span class="nf">byte_to_numpy</span><span class="p">(</span><span class="n">byte_image_data</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">numpy</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">byte_image_data</span><span class="p">))[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span>
+
+        <span class="c1"># determine class names</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">path_to_cnn</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+        <span class="n">classes</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;classes&#39;</span><span class="p">,</span>
+                             <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="s1">&#39;/labels/labels&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="s1">&#39;image_panel&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Please fetch the test_storing_images table&#39;</span><span class="p">)</span> 
+
+        <span class="n">image_data</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;image_panel&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">byte_to_numpy</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+
+        <span class="n">final_model</span> <span class="o">=</span> <span class="n">load_model</span><span class="p">(</span><span class="n">path_to_cnn</span><span class="p">)</span>
+
+        <span class="n">final_model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="s1">&#39;categorical_crossentropy&#39;</span><span class="p">,</span>
+                           <span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;adadelta&#39;</span><span class="p">,</span>
+                           <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+        <span class="n">confidence_array</span> <span class="o">=</span> <span class="n">final_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">image_data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;ml_label&#39;</span><span class="p">]</span>  <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">classes</span><span class="p">)[</span><span class="n">confidence_array</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;ml_confidence&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">confidence_array</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="id_generator"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.id_generator">[docs]</a><span class="k">def</span> <span class="nf">id_generator</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                 <span class="n">chars</span><span class="o">=</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_uppercase</span> <span class="o">+</span>
+                        <span class="n">string</span><span class="o">.</span><span class="n">digits</span> <span class="o">+</span>
+                        <span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">)):</span>
+    <span class="sd">&quot;&quot;&quot;Obtain omicron triggers run gravityspy on</span>
+
+<span class="sd">    Parameters:</span>
+
+<span class="sd">        x (str): the item you would like a random id to be generated for</span>
+<span class="sd">    Returns:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">SystemRandom</span><span class="p">()</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">chars</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="get_connection_str"><a class="viewcode-back" href="../../../api/gravityspy_ligo.table.events.html#gravityspy_ligo.table.events.get_connection_str">[docs]</a><span class="k">def</span> <span class="nf">get_connection_str</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="s1">&#39;gravityspy&#39;</span><span class="p">,</span>
+                       <span class="n">host</span><span class="o">=</span><span class="s1">&#39;gravityspy.ciera.northwestern.edu&#39;</span><span class="p">,</span>
+                       <span class="n">port</span><span class="o">=</span><span class="s1">&#39;5432&#39;</span><span class="p">,</span>
+                       <span class="n">server</span><span class="o">=</span><span class="s1">&#39;postgresql&#39;</span><span class="p">,</span>
+                       <span class="n">user</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                       <span class="n">passwd</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create string to pass to create_engine</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">user</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">passwd</span><span class="p">):</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;GRAVITYSPY_DATABASE_USER&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">passwd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;GRAVITYSPY_DATABASE_PASSWD&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">user</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">passwd</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Remember to either pass &#39;</span>
+                         <span class="s1">&#39;or export GRAVITYSPY_DATABASE_USER &#39;</span>
+                         <span class="s1">&#39;and export GRAVITYSPY_DATABASE_PASSWD in order &#39;</span>
+                         <span class="s1">&#39;to access the Gravity Spy Data: &#39;</span>
+                         <span class="s1">&#39;https://secrets.ligo.org/secrets/144/&#39;</span>
+                         <span class="s1">&#39; description is username and secret is password.&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">://</span><span class="si">{1}</span><span class="s1">:</span><span class="si">{2}</span><span class="s1">@</span><span class="si">{3}</span><span class="s1">:</span><span class="si">{4}</span><span class="s1">/</span><span class="si">{5}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">passwd</span><span class="p">,</span>
+                                              <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">db</span><span class="p">)</span></div>
+
+<span class="c1"># define multiprocessing method</span>
+<span class="k">def</span> <span class="nf">_make_single_qscan</span><span class="p">(</span><span class="n">inputs</span><span class="p">):</span>
+    <span class="n">event_time</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">ifo</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">gid</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+    <span class="n">plot_directory</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+    <span class="n">timeseries</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span>
+    <span class="n">channel_name</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span>
+    <span class="n">frametype</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span>
+    <span class="n">nproc</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span>
+    <span class="n">verbose</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span>
+
+    <span class="c1"># Parse Ini File</span>
+    <span class="n">plot_time_ranges</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">plot_time_ranges</span>
+    <span class="n">plot_normalized_energy_range</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">plot_normalized_energy_range</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">timeseries</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">specsgrams</span><span class="p">,</span> <span class="n">q_value</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">make_q_scans</span><span class="p">(</span><span class="n">event_time</span><span class="o">=</span><span class="n">event_time</span><span class="p">,</span>
+                                                     <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+                                                     <span class="n">timeseries</span><span class="o">=</span><span class="n">timeseries</span><span class="p">,</span>
+                                                     <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">specsgrams</span><span class="p">,</span> <span class="n">q_value</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">make_q_scans</span><span class="p">(</span><span class="n">event_time</span><span class="o">=</span><span class="n">event_time</span><span class="p">,</span>
+                                                     <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+                                                     <span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span>
+                                                     <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">channel_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">specsgrams</span><span class="p">,</span> <span class="n">q_value</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">make_q_scans</span><span class="p">(</span><span class="n">event_time</span><span class="o">=</span><span class="n">event_time</span><span class="p">,</span>
+                                                     <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+                                                     <span class="n">channel_name</span><span class="o">=</span><span class="n">channel_name</span><span class="p">,</span>
+                                                     <span class="n">frametype</span><span class="o">=</span><span class="n">frametype</span><span class="p">,</span>
+                                                     <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">save_q_scans</span><span class="p">(</span><span class="n">plot_directory</span><span class="p">,</span> <span class="n">specsgrams</span><span class="p">,</span>
+                           <span class="n">plot_normalized_energy_range</span><span class="p">,</span> <span class="n">plot_time_ranges</span><span class="p">,</span>
+                           <span class="n">ifo</span><span class="p">,</span> <span class="n">event_time</span><span class="p">,</span> <span class="n">id_string</span><span class="o">=</span><span class="n">gid</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">event_time</span><span class="p">,</span> <span class="n">q_value</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pylint: disable=broad-except</span>
+        <span class="k">if</span> <span class="n">nproc</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">event_time</span><span class="p">,</span> <span class="n">exc</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Scott Coughlin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

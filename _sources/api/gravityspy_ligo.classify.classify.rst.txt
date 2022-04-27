@@ -1,0 +1,4 @@
+.. automodule:: gravityspy_ligo.classify.classify
+   :members:
+   :undoc-members:
+   :show-inheritance:

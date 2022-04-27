@@ -1,0 +1,18 @@
+gravityspy\_ligo.api package
+============================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   gravityspy_ligo.api.project
+
+Module contents
+---------------
+
+.. automodule:: gravityspy_ligo.api
+   :members:
+   :undoc-members:
+   :show-inheritance:

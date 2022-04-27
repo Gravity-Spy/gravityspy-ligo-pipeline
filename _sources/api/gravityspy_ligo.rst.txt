@@ -1,0 +1,23 @@
+gravityspy\_ligo package
+========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   gravityspy_ligo.api
+   gravityspy_ligo.classify
+   gravityspy_ligo.ml
+   gravityspy_ligo.plot
+   gravityspy_ligo.table
+   gravityspy_ligo.utils
+
+Module contents
+---------------
+
+.. automodule:: gravityspy_ligo
+   :members:
+   :undoc-members:
+   :show-inheritance:

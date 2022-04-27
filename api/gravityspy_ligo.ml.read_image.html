@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>&lt;no title&gt; &mdash; gravityspy_ligo 0+untagged.1.gba8fda6 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/gravityspy_ligo-docs.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> gravityspy_ligo
+          </a>
+              <div class="version">
+                0+untagged.1.gba8fda6
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../install/index.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../classify/index.html">Classify a Trigger With Gravity Spy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../events/index.html">Classifying A Table of Events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trainmodel/index.html">Running <code class="docutils literal notranslate"><span class="pre">trainmodel</span></code> on the command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Querying Gravity Spy data</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">gravityspy_ligo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>&lt;no title&gt;</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/gravityspy_ligo.ml.read_image.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <span class="target" id="module-gravityspy_ligo.ml.read_image"></span><dl class="py function">
+<dt class="sig sig-object py" id="gravityspy_ligo.ml.read_image.read_and_crop_image">
+<span class="sig-prename descclassname"><span class="pre">gravityspy_ligo.ml.read_image.</span></span><span class="sig-name descname"><span class="pre">read_and_crop_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/ml/read_image.html#read_and_crop_image"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.ml.read_image.read_and_crop_image" title="Permalink to this definition"></a></dt>
+<dd><p>Read in a crop part of image you want to keep</p>
+<dl class="simple">
+<dt>Parameters</dt><dd><dl class="simple">
+<dt>filename (str):</dt><dd><p>the file you would like to pixelize</p>
+</dd>
+<dt>x (float, list):</dt><dd><p>xrange of pixels to keep</p>
+</dd>
+<dt>y (float, list):</dt><dd><p>yrange of pixels to keep</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns</dt><dd><dl class="simple">
+<dt>image_data (<a href="#id1"><span class="problematic" id="id2">`</span></a>np.array):</dt><dd><p>this images is taken from rgb to gray scale
+and then downsampled by the resolution.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gravityspy_ligo.ml.read_image.read_grayscale">
+<span class="sig-prename descclassname"><span class="pre">gravityspy_ligo.ml.read_image.</span></span><span class="sig-name descname"><span class="pre">read_grayscale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[66,</span> <span class="pre">532]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[105,</span> <span class="pre">671]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/ml/read_image.html#read_grayscale"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.ml.read_image.read_grayscale" title="Permalink to this definition"></a></dt>
+<dd><p>Convert image from RGB to Gray, downsample</p>
+<dl class="simple">
+<dt>Parameters</dt><dd><dl class="simple">
+<dt>filename (str):</dt><dd><p>the file you would like to pixelize</p>
+</dd>
+<dt>resolution (float, optional):</dt><dd><p>default: 0.3</p>
+</dd>
+<dt>verbose (bool, optional):</dt><dd><p>default: False</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns</dt><dd><dl class="simple">
+<dt>image_data (<a href="#id3"><span class="problematic" id="id4">`</span></a>np.array):</dt><dd><p>this images is taken from rgb to gray scale
+and then downsampled by the resolution.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gravityspy_ligo.ml.read_image.read_rgb">
+<span class="sig-prename descclassname"><span class="pre">gravityspy_ligo.ml.read_image.</span></span><span class="sig-name descname"><span class="pre">read_rgb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[66,</span> <span class="pre">532]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[105,</span> <span class="pre">671]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/ml/read_image.html#read_rgb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.ml.read_image.read_rgb" title="Permalink to this definition"></a></dt>
+<dd><p>Convert image from RGB to Gray, downsample</p>
+<dl class="simple">
+<dt>Parameters</dt><dd><dl class="simple">
+<dt>filename (str):</dt><dd><p>the file you would like to pixelize</p>
+</dd>
+<dt>resolution (float, optional):</dt><dd><p>default: 0.3</p>
+</dd>
+<dt>verbose (bool, optional):</dt><dd><p>default: False</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns</dt><dd><dl class="simple">
+<dt>image_data (<a href="#id5"><span class="problematic" id="id6">`</span></a>np.array):</dt><dd><p>this images is taken from rgb to gray scale
+and then downsampled by the resolution.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Scott Coughlin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

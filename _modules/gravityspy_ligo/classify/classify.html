@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gravityspy_ligo.classify.classify &mdash; gravityspy_ligo 0+untagged.1.gba8fda6 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/gravityspy_ligo-docs.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> gravityspy_ligo
+          </a>
+              <div class="version">
+                0+untagged.1.gba8fda6
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install/index.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../classify/index.html">Classify a Trigger With Gravity Spy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../events/index.html">Classifying A Table of Events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../trainmodel/index.html">Running <code class="docutils literal notranslate"><span class="pre">trainmodel</span></code> on the command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Querying Gravity Spy data</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gravityspy_ligo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>gravityspy_ligo.classify.classify</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gravityspy_ligo.classify.classify</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1"># Copyright (C) Scott Coughlin (2017-)</span>
+<span class="c1">#</span>
+<span class="c1"># This file is part of gravityspy.</span>
+<span class="c1">#</span>
+<span class="c1"># gravityspy is free software: you can redistribute it and/or modify</span>
+<span class="c1"># it under the terms of the GNU General Public License as published by</span>
+<span class="c1"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c1"># (at your option) any later version.</span>
+<span class="c1">#</span>
+<span class="c1"># gravityspy is distributed in the hope that it will be useful,</span>
+<span class="c1"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c1"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c1"># GNU General Public License for more details.</span>
+<span class="c1">#</span>
+<span class="c1"># You should have received a copy of the GNU General Public License</span>
+<span class="c1"># along with gravityspy.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+<span class="kn">from</span> <span class="nn">..utils</span> <span class="kn">import</span> <span class="n">log</span>
+<span class="kn">from</span> <span class="nn">..utils</span> <span class="kn">import</span> <span class="n">utils</span>
+<span class="kn">from</span> <span class="nn">..table</span> <span class="kn">import</span> <span class="n">Events</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<div class="viewcode-block" id="classify"><a class="viewcode-back" href="../../../api/gravityspy_ligo.classify.classify.html#gravityspy_ligo.classify.classify.classify">[docs]</a><span class="k">def</span> <span class="nf">classify</span><span class="p">(</span><span class="n">event_time</span><span class="p">,</span> <span class="n">channel_name</span><span class="p">,</span>
+             <span class="n">path_to_cnn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;classify an excess noise event</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        If you do not pass the **kwargs `timeseries`</span>
+<span class="sd">        or `source` then your timeseries will attempt to be</span>
+<span class="sd">        generated on the fly uses `gwpy.timeseries.TimeSeries.get`</span>
+
+<span class="sd">    Parameters:</span>
+
+<span class="sd">        event_time (list):</span>
+<span class="sd">            A list of `gwpy.spectrogram.Spectrogram` objects</span>
+
+<span class="sd">        channel_name (array):</span>
+<span class="sd">            The min and max of the colorbar for the plots</span>
+
+<span class="sd">        path_to_cnn (str):</span>
+<span class="sd">            What detetor where these spectrograms from</span>
+
+<span class="sd">        **kwargs:</span>
+<span class="sd">            timeseries</span>
+<span class="sd">            source</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        ind_fig_all</span>
+<span class="sd">            A list of individual spectrogram plots</span>
+<span class="sd">        super_fig</span>
+<span class="sd">            A single `plot` object contianing all spectrograms</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">path_to_cnn</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The provided cnn model does not &#39;</span>
+                         <span class="s1">&#39;exist.&#39;</span><span class="p">)</span>
+
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">Logger</span><span class="p">(</span><span class="s1">&#39;Gravity Spy: Classifying Event&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Extract Detector Name From Channel Name</span>
+    <span class="n">detector_name</span> <span class="o">=</span> <span class="n">channel_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># Parse Keyword Arguments</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;config&#39;</span><span class="p">,</span> <span class="n">utils</span><span class="o">.</span><span class="n">GravitySpyConfigFile</span><span class="p">())</span>
+    <span class="n">plot_directory</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;plot_directory&#39;</span><span class="p">,</span> <span class="s1">&#39;plots&#39;</span><span class="p">)</span>
+    <span class="n">id_string</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;id_string&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{0:.9f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">event_time</span><span class="p">))</span>
+
+    <span class="c1"># Parse Ini File</span>
+    <span class="n">plot_time_ranges</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">plot_time_ranges</span>
+    <span class="n">plot_normalized_energy_range</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">plot_normalized_energy_range</span>
+    <span class="n">frange</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">search_frequency_range</span>
+
+    <span class="c1"># Cropping the results before interpolation to save on time and memory</span>
+    <span class="c1"># perform the q-transform</span>
+    <span class="n">specsgrams</span><span class="p">,</span> <span class="n">q_value</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">make_q_scans</span><span class="p">(</span><span class="n">event_time</span><span class="o">=</span><span class="n">event_time</span><span class="p">,</span>
+                                             <span class="n">channel_name</span><span class="o">=</span><span class="n">channel_name</span><span class="p">,</span>
+                                             <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+                                             <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="n">utils</span><span class="o">.</span><span class="n">save_q_scans</span><span class="p">(</span><span class="n">plot_directory</span><span class="p">,</span> <span class="n">specsgrams</span><span class="p">,</span>
+                       <span class="n">plot_normalized_energy_range</span><span class="p">,</span> <span class="n">plot_time_ranges</span><span class="p">,</span>
+                       <span class="n">detector_name</span><span class="p">,</span> <span class="n">event_time</span><span class="p">,</span> <span class="n">frange</span><span class="o">=</span><span class="n">frange</span><span class="p">,</span>
+                       <span class="n">id_string</span><span class="o">=</span><span class="n">id_string</span><span class="p">,</span>
+                       <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">label_q_scans</span><span class="p">(</span><span class="n">plot_directory</span><span class="o">=</span><span class="n">plot_directory</span><span class="p">,</span>
+                                  <span class="n">path_to_cnn</span><span class="o">=</span><span class="n">path_to_cnn</span><span class="p">,</span>
+                                  <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="n">results</span><span class="p">[</span><span class="s1">&#39;q_value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">q_value</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+    <span class="n">results</span><span class="p">[</span><span class="s1">&#39;Filename1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;Filename1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+                                                      <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">plot_directory</span><span class="p">,))</span>
+    <span class="n">results</span><span class="p">[</span><span class="s1">&#39;Filename2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;Filename2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+                                                      <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">plot_directory</span><span class="p">,))</span>
+    <span class="n">results</span><span class="p">[</span><span class="s1">&#39;Filename3&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;Filename3&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+                                                      <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">plot_directory</span><span class="p">,))</span>
+    <span class="n">results</span><span class="p">[</span><span class="s1">&#39;Filename4&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;Filename4&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+                                                      <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">plot_directory</span><span class="p">,))</span>
+
+    <span class="k">return</span> <span class="n">Events</span><span class="o">.</span><span class="n">from_pandas</span><span class="p">(</span><span class="n">results</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Scott Coughlin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

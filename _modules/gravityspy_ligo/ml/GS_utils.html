@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gravityspy_ligo.ml.GS_utils &mdash; gravityspy_ligo 0+untagged.1.gba8fda6 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/gravityspy_ligo-docs.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> gravityspy_ligo
+          </a>
+              <div class="version">
+                0+untagged.1.gba8fda6
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install/index.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../classify/index.html">Classify a Trigger With Gravity Spy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../events/index.html">Classifying A Table of Events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../trainmodel/index.html">Running <code class="docutils literal notranslate"><span class="pre">trainmodel</span></code> on the command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Querying Gravity Spy data</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gravityspy_ligo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>gravityspy_ligo.ml.GS_utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gravityspy_ligo.ml.GS_utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; This file contains different utility functions that are not connected</span>
+<span class="sd">in anyway to the networks presented in the tutorials, but rather help in</span>
+<span class="sd">processing the outputs into a more understandable way.</span>
+
+<span class="sd">For example ``tile_raster_images`` helps in generating a easy to grasp</span>
+<span class="sd">image from a set of samples or weights.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">keras</span> <span class="kn">import</span> <span class="n">backend</span> <span class="k">as</span> <span class="n">K</span>
+<span class="kn">from</span> <span class="nn">keras.regularizers</span> <span class="kn">import</span> <span class="n">l2</span>
+<span class="kn">from</span> <span class="nn">keras.models</span> <span class="kn">import</span> <span class="n">Sequential</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="kn">import</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">Dropout</span><span class="p">,</span> <span class="n">Activation</span><span class="p">,</span> <span class="n">Flatten</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="kn">import</span> <span class="n">MaxPooling2D</span><span class="p">,</span> <span class="n">Conv2D</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="c1">#4/2/2018</span>
+<div class="viewcode-block" id="concatenate_views"><a class="viewcode-back" href="../../../api/gravityspy_ligo.ml.GS_utils.html#gravityspy_ligo.ml.GS_utils.concatenate_views">[docs]</a><span class="k">def</span> <span class="nf">concatenate_views</span><span class="p">(</span><span class="n">image_set1</span><span class="p">,</span> <span class="n">image_set2</span><span class="p">,</span> <span class="n">image_set3</span><span class="p">,</span>
+                      <span class="n">image_set4</span><span class="p">,</span> <span class="n">image_size</span><span class="p">,</span> <span class="n">rgb_flag</span><span class="p">,</span>
+                      <span class="n">order_of_channels</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a merged view from a set of 4 views of one sample image</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        image_set1 (array):</span>
+<span class="sd">            The grayscale downsamples pixels for one duration of one</span>
+<span class="sd">            of the samples</span>
+
+<span class="sd">        image_set2 (array):</span>
+<span class="sd">            The grayscale downsamples pixels for one duration of one</span>
+<span class="sd">            of the samples</span>
+
+<span class="sd">        image_set3 (array):</span>
+<span class="sd">            The grayscale downsamples pixels for one duration of one</span>
+<span class="sd">            of the samples</span>
+
+<span class="sd">        image_set4 (array):</span>
+<span class="sd">            The grayscale downsamples pixels for one duration of one</span>
+<span class="sd">            of the samples</span>
+
+<span class="sd">        image_size (list):</span>
+<span class="sd">            This refers to the shape of the non flattened pixelized image</span>
+<span class="sd">            array</span>
+
+<span class="sd">        rgb_flag (bool):</span>
+<span class="sd">            Are you trying to create a merged view of grayscale</span>
+<span class="sd">            or RGB image renders</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        concated_view (array):</span>
+<span class="sd">            A single merged view of the sample, in the case</span>
+<span class="sd">            a merged view of the 0.5 1.0 2.0 and 4.0 duration</span>
+<span class="sd">            omega scans.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">img_rows</span> <span class="o">=</span> <span class="n">image_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">img_cols</span> <span class="o">=</span> <span class="n">image_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">rgb_flag</span><span class="p">:</span>
+        <span class="n">ch</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ch</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">order_of_channels</span> <span class="o">==</span> <span class="s1">&#39;channels_last&#39;</span><span class="p">:</span>
+        <span class="n">concat_images_set</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">image_set1</span><span class="p">),</span> <span class="n">img_rows</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">,</span> <span class="n">ch</span><span class="p">))</span>
+        <span class="n">concat_images_set2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">image_set3</span><span class="p">),</span> <span class="n">img_rows</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">,</span> <span class="n">ch</span><span class="p">))</span>
+        <span class="n">concat_row_axis</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">concat_col_axis</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="k">elif</span> <span class="n">order_of_channels</span> <span class="o">==</span> <span class="s1">&#39;channels_first&#39;</span><span class="p">:</span>
+        <span class="n">concat_images_set</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">image_set1</span><span class="p">),</span> <span class="n">ch</span><span class="p">,</span> <span class="n">img_rows</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">))</span>
+        <span class="n">concat_images_set2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">image_set3</span><span class="p">),</span> <span class="n">ch</span><span class="p">,</span> <span class="n">img_rows</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">))</span>
+        <span class="n">concat_row_axis</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">concat_col_axis</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Do not understand supplied channel order&quot;</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">image_set1</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">image_set2</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">image_set1</span><span class="p">)):</span>
+        <span class="n">concat_images_set</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">image_set1</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">image_set2</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="n">concat_row_axis</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">image_set3</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">image_set4</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">image_set3</span><span class="p">)):</span>
+        <span class="n">concat_images_set2</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">image_set3</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">image_set4</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="n">concat_row_axis</span><span class="p">)</span>
+
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">concat_images_set</span><span class="p">,</span><span class="n">concat_images_set2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">concat_col_axis</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+<span class="c1">#4/2/2018</span>
+<div class="viewcode-block" id="build_cnn"><a class="viewcode-back" href="../../../api/gravityspy_ligo.ml.GS_utils.html#gravityspy_ligo.ml.GS_utils.build_cnn">[docs]</a><span class="k">def</span> <span class="nf">build_cnn</span><span class="p">(</span><span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">,</span> <span class="n">order_of_channels</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This is where we use Keras to build a covolutional neural network (CNN)</span>
+
+<span class="sd">    The CNN built here is described in the</span>
+<span class="sd">    `Table 5 &lt;https://www.sciencedirect.com/science/article/pii/S0020025518301634#tbl0004&gt;`_</span>
+
+<span class="sd">    There are 5 layers. For each layer the logic is as follows</span>
+
+<span class="sd">    input 2D matrix --&gt; 2D Conv layer with x number of kernels with a 5 by 5 shape</span>
+<span class="sd">    --&gt; activation layer we use `ReLU &lt;https://en.wikipedia.org/wiki/Rectifier_(neural_networks)&gt;`_</span>
+<span class="sd">    --&gt; MaxPooling of size 2 by 2 all pixels are now grouped into bigger pixels of</span>
+<span class="sd">    size 2 by 2 and the max pixel of the pixels that make up the 2 by 2 pizels is the</span>
+<span class="sd">    value of the bigger pixel --&gt; Dropout set to 50 percent. This means each pixel</span>
+<span class="sd">    at this stage has a 50 percent chance of being set to 0.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        image_rows (int):</span>
+<span class="sd">            This refers to the number of rows in the non-flattened image</span>
+
+<span class="sd">        image_cols (int):</span>
+<span class="sd">            This refers to the number of cols in the non-flattened image</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        model (`object`):</span>
+<span class="sd">            a CNN</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">W_reg</span> <span class="o">=</span> <span class="mf">1e-4</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;regularization parameter: &#39;</span><span class="p">,</span> <span class="n">W_reg</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">order_of_channels</span> <span class="o">==</span> <span class="s1">&#39;channels_last&#39;</span><span class="p">:</span>
+        <span class="n">input_shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">order_of_channels</span> <span class="o">==</span> <span class="s1">&#39;channels_first&#39;</span><span class="p">:</span>
+        <span class="n">input_shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Do not understand supplied channel order&quot;</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">()</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;valid&#39;</span><span class="p">,</span>
+              <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">,</span>
+              <span class="n">kernel_regularizer</span><span class="o">=</span><span class="n">l2</span><span class="p">(</span><span class="n">W_reg</span><span class="p">)))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Activation</span><span class="p">(</span><span class="s2">&quot;relu&quot;</span><span class="p">))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">MaxPooling2D</span><span class="p">(</span><span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.5</span><span class="p">))</span>
+
+
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;valid&#39;</span><span class="p">,</span> <span class="n">kernel_regularizer</span><span class="o">=</span><span class="n">l2</span><span class="p">(</span><span class="n">W_reg</span><span class="p">)))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Activation</span><span class="p">(</span><span class="s2">&quot;relu&quot;</span><span class="p">))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">MaxPooling2D</span><span class="p">(</span><span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.5</span><span class="p">))</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;valid&#39;</span><span class="p">,</span> <span class="n">kernel_regularizer</span><span class="o">=</span><span class="n">l2</span><span class="p">(</span><span class="n">W_reg</span><span class="p">)))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Activation</span><span class="p">(</span><span class="s2">&quot;relu&quot;</span><span class="p">))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">MaxPooling2D</span><span class="p">(</span><span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.5</span><span class="p">))</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;valid&#39;</span><span class="p">,</span> <span class="n">kernel_regularizer</span><span class="o">=</span><span class="n">l2</span><span class="p">(</span><span class="n">W_reg</span><span class="p">)))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Activation</span><span class="p">(</span><span class="s2">&quot;relu&quot;</span><span class="p">))</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">MaxPooling2D</span><span class="p">(</span><span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.5</span><span class="p">))</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Flatten</span><span class="p">())</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="n">kernel_regularizer</span><span class="o">=</span><span class="n">l2</span><span class="p">(</span><span class="n">W_reg</span><span class="p">)))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Activation</span><span class="p">(</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.5</span><span class="p">))</span>
+    <span class="nb">print</span> <span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">model</span></div>
+
+
+<div class="viewcode-block" id="cosine_distance"><a class="viewcode-back" href="../../../api/gravityspy_ligo.ml.GS_utils.html#gravityspy_ligo.ml.GS_utils.cosine_distance">[docs]</a><span class="k">def</span> <span class="nf">cosine_distance</span><span class="p">(</span><span class="n">vects</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the cosine distance of an array</span>
+
+<span class="sd">    Parameters:</span>
+
+<span class="sd">        vect (array):</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">vects</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">K</span><span class="o">.</span><span class="n">epsilon</span><span class="p">())</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">K</span><span class="o">.</span><span class="n">epsilon</span><span class="p">())</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">l2_normalize</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">l2_normalize</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">K</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">y</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="siamese_acc"><a class="viewcode-back" href="../../../api/gravityspy_ligo.ml.GS_utils.html#gravityspy_ligo.ml.GS_utils.siamese_acc">[docs]</a><span class="k">def</span> <span class="nf">siamese_acc</span><span class="p">(</span><span class="n">thred</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate simaese accuracy</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        thred (float):</span>
+<span class="sd">            It is something</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">inner_siamese_acc</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">):</span>
+        <span class="n">pred_res</span> <span class="o">=</span> <span class="n">y_pred</span> <span class="o">&lt;</span> <span class="n">thred</span>
+        <span class="n">acc</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">pred_res</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int32&#39;</span><span class="p">),</span> <span class="n">K</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int32&#39;</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float32&#39;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">acc</span>
+
+    <span class="k">return</span> <span class="n">inner_siamese_acc</span></div>
+
+<div class="viewcode-block" id="eucl_dist_output_shape"><a class="viewcode-back" href="../../../api/gravityspy_ligo.ml.GS_utils.html#gravityspy_ligo.ml.GS_utils.eucl_dist_output_shape">[docs]</a><span class="k">def</span> <span class="nf">eucl_dist_output_shape</span><span class="p">(</span><span class="n">shapes</span><span class="p">):</span>
+    <span class="n">shape1</span><span class="p">,</span> <span class="n">shape2</span> <span class="o">=</span> <span class="n">shapes</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">shape1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="contrastive_loss"><a class="viewcode-back" href="../../../api/gravityspy_ligo.ml.GS_utils.html#gravityspy_ligo.ml.GS_utils.contrastive_loss">[docs]</a><span class="k">def</span> <span class="nf">contrastive_loss</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">):</span>
+    <span class="n">margin</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">K</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">y_true</span> <span class="o">*</span> <span class="n">K</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">y_true</span><span class="p">)</span> <span class="o">*</span> <span class="n">K</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">margin</span> <span class="o">-</span> <span class="n">y_pred</span><span class="p">,</span> <span class="mi">0</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="create_pairs3_gen"><a class="viewcode-back" href="../../../api/gravityspy_ligo.ml.GS_utils.html#gravityspy_ligo.ml.GS_utils.create_pairs3_gen">[docs]</a><span class="k">def</span> <span class="nf">create_pairs3_gen</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">class_indices</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Create the pairs</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        data (float):</span>
+<span class="sd">            It is something</span>
+<span class="sd">        class_indices (list):</span>
+<span class="sd">            It is something</span>
+<span class="sd">        batch_size (int):</span>
+<span class="sd">            It is something</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pairs1</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">pairs2</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">number_of_classes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">class_indices</span><span class="p">)</span>
+    <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">class_indices</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">class_indices</span><span class="p">[</span><span class="n">d</span><span class="p">])):</span>
+                <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="c1"># positive pair</span>
+                <span class="n">j</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">class_indices</span><span class="p">[</span><span class="n">d</span><span class="p">]))</span>
+                <span class="n">z1</span><span class="p">,</span> <span class="n">z2</span> <span class="o">=</span> <span class="n">class_indices</span><span class="p">[</span><span class="n">d</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="n">class_indices</span><span class="p">[</span><span class="n">d</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+
+                <span class="n">pairs1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">z1</span><span class="p">])</span>
+                <span class="n">pairs2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">z2</span><span class="p">])</span>
+                <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+                <span class="c1"># negative pair</span>
+                <span class="n">inc</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">number_of_classes</span><span class="p">)</span>
+                <span class="n">other_class_id</span> <span class="o">=</span> <span class="p">(</span><span class="n">d</span> <span class="o">+</span> <span class="n">inc</span><span class="p">)</span> <span class="o">%</span> <span class="n">number_of_classes</span>
+                <span class="n">j</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">class_indices</span><span class="p">[</span><span class="n">other_class_id</span><span class="p">])</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">z1</span><span class="p">,</span> <span class="n">z2</span> <span class="o">=</span> <span class="n">class_indices</span><span class="p">[</span><span class="n">d</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="n">class_indices</span><span class="p">[</span><span class="n">other_class_id</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+
+                <span class="n">pairs1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">z1</span><span class="p">])</span>
+                <span class="n">pairs2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">z2</span><span class="p">])</span>
+                <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">counter</span> <span class="o">==</span> <span class="n">batch_size</span><span class="p">:</span>
+                    <span class="c1">#yield np.array(pairs), np.array(labels)</span>
+                    <span class="k">yield</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pairs1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pairs2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)],</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+                    <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="n">pairs1</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="n">pairs2</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="split_data_set"><a class="viewcode-back" href="../../../api/gravityspy_ligo.ml.GS_utils.html#gravityspy_ligo.ml.GS_utils.split_data_set">[docs]</a><span class="k">def</span> <span class="nf">split_data_set</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fraction_validation</span><span class="o">=</span><span class="mf">.125</span><span class="p">,</span> <span class="n">fraction_testing</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">image_size</span><span class="o">=</span><span class="p">[</span><span class="mi">140</span><span class="p">,</span> <span class="mi">170</span><span class="p">]):</span>
+    <span class="sd">&quot;&quot;&quot;Split data set to training validation and optional testing</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        data (str):</span>
+<span class="sd">            Pickle file containing training set data</span>
+
+<span class="sd">        fraction_validation (float, optional):</span>
+<span class="sd">            Default .125</span>
+
+<span class="sd">        fraction_testing (float, optional):</span>
+<span class="sd">            Default None</span>
+
+<span class="sd">        image_size (list, optional):</span>
+<span class="sd">            Default [140, 170]</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        numpy arrays</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span> <span class="o">=</span> <span class="n">image_size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">image_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">validationDF</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;Label&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+                       <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="n">fraction_validation</span><span class="p">,</span>
+                       <span class="n">random_state</span><span class="o">=</span><span class="n">random_seed</span><span class="p">)</span>
+                       <span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">data</span><span class="o">.</span><span class="n">uniqueID</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span>
+                                    <span class="n">validationDF</span><span class="o">.</span><span class="n">uniqueID</span><span class="p">)]</span>
+
+    <span class="k">if</span> <span class="n">fraction_testing</span><span class="p">:</span>
+        <span class="n">testingDF</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;Label&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+                   <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="n">fraction_testing</span><span class="p">,</span>
+                             <span class="n">random_state</span><span class="o">=</span><span class="n">random_seed</span><span class="p">)</span>
+                   <span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">data</span><span class="o">.</span><span class="n">uniqueID</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span>
+                                        <span class="n">testingDF</span><span class="o">.</span><span class="n">uniqueID</span><span class="p">)]</span>
+
+
+    <span class="c1"># concatenate the pixels</span>
+    <span class="n">train_set_x_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;0.5.png&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                                                     <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">)</span>
+    <span class="n">validation_x_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">validationDF</span><span class="p">[</span><span class="s1">&#39;0.5.png&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                                                     <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">)</span>
+
+    <span class="n">train_set_x_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;1.0.png&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                                                     <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">)</span>
+    <span class="n">validation_x_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">validationDF</span><span class="p">[</span><span class="s1">&#39;1.0.png&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                                                     <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">)</span>
+
+    <span class="n">train_set_x_3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;2.0.png&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                                                     <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">)</span>
+    <span class="n">validation_x_3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">validationDF</span><span class="p">[</span><span class="s1">&#39;2.0.png&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                                                     <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">)</span>
+
+    <span class="n">train_set_x_4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;4.0.png&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                                                     <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">)</span>
+    <span class="n">validation_x_4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">validationDF</span><span class="p">[</span><span class="s1">&#39;4.0.png&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                                                     <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fraction_testing</span><span class="p">:</span>
+        <span class="n">testing_x_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">testingDF</span><span class="p">[</span><span class="s1">&#39;0.5.png&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                                                     <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">)</span>
+        <span class="n">testing_x_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">testingDF</span><span class="p">[</span><span class="s1">&#39;1.0.png&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                                                     <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">)</span>
+        <span class="n">testing_x_3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">testingDF</span><span class="p">[</span><span class="s1">&#39;2.0.png&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                                                     <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">)</span>
+        <span class="n">testing_x_4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">testingDF</span><span class="p">[</span><span class="s1">&#39;4.0.png&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                                                     <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">)</span>
+
+    <span class="n">concat_train</span> <span class="o">=</span> <span class="n">concatenate_views</span><span class="p">(</span><span class="n">train_set_x_1</span><span class="p">,</span> <span class="n">train_set_x_2</span><span class="p">,</span>
+                            <span class="n">train_set_x_3</span><span class="p">,</span> <span class="n">train_set_x_4</span><span class="p">,</span> <span class="p">[</span><span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">],</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">concat_valid</span> <span class="o">=</span> <span class="n">concatenate_views</span><span class="p">(</span><span class="n">validation_x_1</span><span class="p">,</span> <span class="n">validation_x_2</span><span class="p">,</span>
+                            <span class="n">validation_x_3</span><span class="p">,</span> <span class="n">validation_x_4</span><span class="p">,</span>
+                            <span class="p">[</span><span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">],</span> <span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fraction_testing</span><span class="p">:</span>
+        <span class="n">concat_test</span> <span class="o">=</span> <span class="n">concatenate_views</span><span class="p">(</span><span class="n">testing_x_1</span><span class="p">,</span> <span class="n">testing_x_2</span><span class="p">,</span>
+                            <span class="n">testing_x_3</span><span class="p">,</span> <span class="n">testing_x_4</span><span class="p">,</span>
+                            <span class="p">[</span><span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">],</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">concat_test</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">concat_train</span><span class="p">,</span> <span class="n">concat_valid</span><span class="p">,</span> <span class="n">concat_test</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Scott Coughlin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

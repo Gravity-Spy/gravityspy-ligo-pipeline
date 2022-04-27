@@ -1,0 +1,4 @@
+.. automodule:: gravityspy_ligo.plot.plot
+   :members:
+   :undoc-members:
+   :show-inheritance:

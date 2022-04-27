@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>&lt;no title&gt; &mdash; gravityspy_ligo 0+untagged.1.gba8fda6 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/gravityspy_ligo-docs.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> gravityspy_ligo
+          </a>
+              <div class="version">
+                0+untagged.1.gba8fda6
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../install/index.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../classify/index.html">Classify a Trigger With Gravity Spy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../events/index.html">Classifying A Table of Events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trainmodel/index.html">Running <code class="docutils literal notranslate"><span class="pre">trainmodel</span></code> on the command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Querying Gravity Spy data</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">gravityspy_ligo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>&lt;no title&gt;</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/gravityspy_ligo.ml.train_classifier.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <span class="target" id="module-gravityspy_ligo.ml.train_classifier"></span><dl class="py function">
+<dt class="sig sig-object py" id="gravityspy_ligo.ml.train_classifier.fetch_data">
+<span class="sig-prename descclassname"><span class="pre">gravityspy_ligo.ml.train_classifier.</span></span><span class="sig-name descname"><span class="pre">fetch_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ifo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_frequency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4096</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/ml/train_classifier.html#fetch_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.ml.train_classifier.fetch_data" title="Permalink to this definition"></a></dt>
+<dd><p>Fetch raw data around a glitch</p>
+<p>Parameters:</p>
+<blockquote>
+<div><p>ifo (str):</p>
+<p>event_time (str):</p>
+<p>duration (int, optional):</p>
+<p>sample_frequency (int, optional):</p>
+<p>verbose (bool, optional):</p>
+</div></blockquote>
+<p>Returns:</p>
+<blockquote>
+<div><p>a <cite>gwpy.timeseries.TimeSeries</cite></p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gravityspy_ligo.ml.train_classifier.make_model">
+<span class="sig-prename descclassname"><span class="pre">gravityspy_ligo.ml.train_classifier.</span></span><span class="sig-name descname"><span class="pre">make_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">22</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nb_epoch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['0.5.png',</span> <span class="pre">'1.0.png',</span> <span class="pre">'2.0.png',</span> <span class="pre">'4.0.png']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_of_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'channels_last'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nb_classes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">22</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction_validation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.125</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction_testing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_model_based_validset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[140,</span> <span class="pre">170]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1986</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/ml/train_classifier.html#make_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.ml.train_classifier.make_model" title="Permalink to this definition"></a></dt>
+<dd><p>Train a Convultional Neural Net (CNN).</p>
+<p>This module uses <a class="reference external" href="https://keras.io/">keras</a> to interface
+with the creation of a neural net and currently uses
+<a class="reference external" href="http://deeplearning.net/software/theano/">theano</a> as the backend
+for doing the heavy gpu lifting.</p>
+<p>The optimizer <code class="xref py py-class docutils literal notranslate"><span class="pre">keras.optimizers.Adadelta</span></code></p>
+<p>The loss function being optimized is <a class="reference external" href="https://en.wikipedia.org/wiki/Softmax_function">softmax</a></p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><dl class="simple">
+<dt>data (str):</dt><dd><p>Pickle file containing training set data</p>
+</dd>
+<dt>model_name (str, optional):</dt><dd><p>Defaults to <cite>multi_view_classifier.h5</cite>
+path to file you would like to save the model to</p>
+</dd>
+<dt>batch_size (int, optional):</dt><dd><p>Default 22</p>
+</dd>
+<dt>nb_epoch (int, optional):</dt><dd><p>Default 40</p>
+</dd>
+<dt>nb_classes (int, optional):</dt><dd><p>Default 22</p>
+</dd>
+<dt>fraction_validation (float, optional):</dt><dd><p>Default .125</p>
+</dd>
+<dt>fraction_testing (float, optional):</dt><dd><p>Default None</p>
+</dd>
+<dt>all_data_for_train_flag (int, optional):</dt><dd><p>Default 1</p>
+</dd>
+<dt>best_model_based_validset (int,optional):</dt><dd><p>Default 0</p>
+</dd>
+<dt>image_size (list, optional):</dt><dd><p>Default [140, 170]</p>
+</dd>
+<dt>random_seed (int, optional):</dt><dd><p>Default 1986</p>
+</dd>
+<dt>verbose (bool, optional):</dt><dd><p>Default False</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>filename:</dt><dd><p>A trained Convultional Neural Network</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gravityspy_ligo.ml.train_classifier.pickle_trainingset">
+<span class="sig-prename descclassname"><span class="pre">gravityspy_ligo.ml.train_classifier.</span></span><span class="sig-name descname"><span class="pre">pickle_trainingset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_trainingset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_address</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pickleddata/trainingset.pkl'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/ml/train_classifier.html#pickle_trainingset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.ml.train_classifier.pickle_trainingset" title="Permalink to this definition"></a></dt>
+<dd><p>Pre-processes the training set images and save to pickle.</p>
+<p>Parameters:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>path_to_trainingset (str):</dt><dd><p>Path to trainingset where format of training set folder
+is “somedirectoryname”/”classname/”images”</p>
+</dd>
+<dt>save_address (str, optional):</dt><dd><p>Defaults to <cite>pickleddata</cite>
+Path to folder you would like to save the pixelated training data</p>
+</dd>
+<dt>verbose (bool, optional):</dt><dd><p>Defaults to False
+Extra verbosity</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>Returns:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>A pickled <cite>pandas.DataFrame</cite>:</dt><dd><p>with rows of samples
+and columns containing the pixelated 0.5, 1.0, 2.0,
+and 4.0 duration images as well as a column with the True
+true_label and a column with an ID that uniquely identifies that sample</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gravityspy_ligo.ml.train_classifier.training_set_raw_data">
+<span class="sig-prename descclassname"><span class="pre">gravityspy_ligo.ml.train_classifier.</span></span><span class="sig-name descname"><span class="pre">training_set_raw_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_frequency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4096</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/ml/train_classifier.html#training_set_raw_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.ml.train_classifier.training_set_raw_data" title="Permalink to this definition"></a></dt>
+<dd><p>Obtain the raw timeseries for the whole training set</p>
+<p>Parameters:</p>
+<blockquote>
+<div><p>filename (str):</p>
+<p>format (str):</p>
+<p>duration (int, optional):</p>
+<p>sample_frequency (int, optional):</p>
+<p>verbose (bool, optional):</p>
+</div></blockquote>
+<p>Returns:</p>
+<blockquote>
+<div><p>A file containing the raw timeseries data of the training set</p>
+</div></blockquote>
+</dd></dl>
+
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Scott Coughlin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

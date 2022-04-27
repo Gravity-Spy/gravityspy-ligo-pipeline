@@ -1,0 +1,4 @@
+.. automodule:: gravityspy_ligo.api.project
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gravityspy_ligo.ml.train_classifier &mdash; gravityspy_ligo 0+untagged.1.gba8fda6 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/gravityspy_ligo-docs.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> gravityspy_ligo
+          </a>
+              <div class="version">
+                0+untagged.1.gba8fda6
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install/index.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../classify/index.html">Classify a Trigger With Gravity Spy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../events/index.html">Classifying A Table of Events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../trainmodel/index.html">Running <code class="docutils literal notranslate"><span class="pre">trainmodel</span></code> on the command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Querying Gravity Spy data</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">gravityspy_ligo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>gravityspy_ligo.ml.train_classifier</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gravityspy_ligo.ml.train_classifier</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">.GS_utils</span> <span class="kn">import</span> <span class="n">build_cnn</span><span class="p">,</span> <span class="n">concatenate_views</span>
+<span class="kn">from</span> <span class="nn">keras</span> <span class="kn">import</span> <span class="n">backend</span> <span class="k">as</span> <span class="n">K</span>
+<span class="kn">from</span> <span class="nn">keras.models</span> <span class="kn">import</span> <span class="n">Sequential</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="kn">import</span> <span class="n">Dense</span>
+<span class="kn">from</span> <span class="nn">keras.utils</span> <span class="kn">import</span> <span class="n">np_utils</span>
+<span class="kn">from</span> <span class="nn">keras.callbacks</span> <span class="kn">import</span> <span class="n">ModelCheckpoint</span>
+<span class="kn">from</span> <span class="nn">..utils</span> <span class="kn">import</span> <span class="n">log</span>
+<span class="kn">from</span> <span class="nn">gwpy.table</span> <span class="kn">import</span> <span class="n">EventTable</span>
+<span class="kn">from</span> <span class="nn">gwpy.timeseries</span> <span class="kn">import</span> <span class="n">TimeSeries</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">read_image</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">By Sara Bahaadini</span>
+<span class="sd">This function reads the  pickle files of golden_set and train a ML classifier</span>
+<span class="sd">and write it into a model folder</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="fetch_data"><a class="viewcode-back" href="../../../api/gravityspy_ligo.ml.train_classifier.html#gravityspy_ligo.ml.train_classifier.fetch_data">[docs]</a><span class="k">def</span> <span class="nf">fetch_data</span><span class="p">(</span><span class="n">ifo</span><span class="p">,</span> <span class="n">event_time</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">sample_frequency</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span>
+               <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Fetch raw data around a glitch</span>
+
+<span class="sd">    Parameters:</span>
+
+<span class="sd">        ifo (str):</span>
+
+<span class="sd">        event_time (str):</span>
+
+<span class="sd">        duration (int, optional):</span>
+
+<span class="sd">        sample_frequency (int, optional):</span>
+
+<span class="sd">        verbose (bool, optional):</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        a `gwpy.timeseries.TimeSeries`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># find closest sample time to event time</span>
+    <span class="n">center_time</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">event_time</span><span class="p">)</span> <span class="o">+</span>
+                  <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">((</span><span class="n">event_time</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">event_time</span><span class="p">))</span> <span class="o">*</span>
+                         <span class="n">sample_frequency</span><span class="p">)</span> <span class="o">/</span> <span class="n">sample_frequency</span><span class="p">)</span>
+
+    <span class="c1"># determine segment start and stop times</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">center_time</span> <span class="o">-</span> <span class="n">duration</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">stop_time</span> <span class="o">=</span> <span class="n">start_time</span> <span class="o">+</span> <span class="n">duration</span>
+    <span class="n">frametype</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;frametype&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">frametype</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">_HOFT_</span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ifo</span><span class="p">,</span> <span class="n">frametype</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">channel_name</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">:GDS-CALIB_STRAIN&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ifo</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">TimeSeries</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">channel_name</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span>
+                              <span class="n">stop_time</span><span class="p">,</span> <span class="n">frametype</span><span class="o">=</span><span class="n">frametype</span><span class="p">,</span>
+                              <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;float64&#39;</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">TimeSeries</span><span class="o">.</span><span class="n">fetch_open_data</span><span class="p">(</span><span class="n">ifo</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">stop_time</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">sample_rate</span><span class="o">.</span><span class="n">decompose</span><span class="p">()</span><span class="o">.</span><span class="n">value</span> <span class="o">!=</span> <span class="n">sample_frequency</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">sample_frequency</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="training_set_raw_data"><a class="viewcode-back" href="../../../api/gravityspy_ligo.ml.train_classifier.html#gravityspy_ligo.ml.train_classifier.training_set_raw_data">[docs]</a><span class="k">def</span> <span class="nf">training_set_raw_data</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="nb">format</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">sample_frequency</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span>
+                          <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Obtain the raw timeseries for the whole training set</span>
+
+<span class="sd">    Parameters:</span>
+
+<span class="sd">        filename (str):</span>
+
+<span class="sd">        format (str):</span>
+
+<span class="sd">        duration (int, optional):</span>
+
+<span class="sd">        sample_frequency (int, optional):</span>
+
+<span class="sd">        verbose (bool, optional):</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        A file containing the raw timeseries data of the training set</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">Logger</span><span class="p">(</span><span class="s1">&#39;Gravity Spy: Obtaining TimeSeries&#39;</span>
+                        <span class="s1">&#39; Data For Trainingset&#39;</span><span class="p">)</span>
+    <span class="n">trainingset_table</span> <span class="o">=</span> <span class="n">EventTable</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="s1">&#39;gravityspy&#39;</span><span class="p">,</span>
+                                         <span class="s1">&#39;trainingsetv1d1&#39;</span><span class="p">,</span>
+                                         <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">,</span> <span class="s1">&#39;ifo&#39;</span><span class="p">,</span>
+                                                  <span class="s1">&#39;true_label&#39;</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">ifo</span><span class="p">,</span> <span class="n">gps</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">trainingset_table</span><span class="p">[</span><span class="s1">&#39;ifo&#39;</span><span class="p">],</span>
+                               <span class="n">trainingset_table</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">],</span>
+                               <span class="n">trainingset_table</span><span class="p">[</span><span class="s1">&#39;true_label&#39;</span><span class="p">]):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Obtaining sample </span><span class="si">{0}</span><span class="s1"> with gps </span><span class="si">{1}</span><span class="s1"> from &#39;</span>
+                    <span class="s1">&#39;</span><span class="si">{2}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">gps</span><span class="p">,</span> <span class="n">ifo</span><span class="p">))</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">fetch_data</span><span class="p">(</span><span class="n">ifo</span><span class="p">,</span> <span class="n">gps</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span>
+                          <span class="n">sample_frequency</span><span class="o">=</span><span class="n">sample_frequency</span><span class="p">,</span>
+                          <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Writing Sample To File..&#39;</span><span class="p">)</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="nb">format</span><span class="p">,</span>
+                   <span class="n">append</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                   <span class="n">path</span><span class="o">=</span><span class="s1">&#39;/data/</span><span class="si">{0}</span><span class="s1">/</span><span class="si">{1}</span><span class="s1">/&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">label</span><span class="p">,</span><span class="n">gps</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="pickle_trainingset"><a class="viewcode-back" href="../../../api/gravityspy_ligo.ml.train_classifier.html#gravityspy_ligo.ml.train_classifier.pickle_trainingset">[docs]</a><span class="k">def</span> <span class="nf">pickle_trainingset</span><span class="p">(</span><span class="n">path_to_trainingset</span><span class="p">,</span>
+                       <span class="n">save_address</span><span class="o">=</span><span class="s1">&#39;pickleddata/trainingset.pkl&#39;</span><span class="p">,</span>
+                       <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Pre-processes the training set images and save to pickle.</span>
+
+<span class="sd">    Parameters:</span>
+
+<span class="sd">        path_to_trainingset (str):</span>
+<span class="sd">            Path to trainingset where format of training set folder</span>
+<span class="sd">            is &quot;somedirectoryname&quot;/&quot;classname/&quot;images&quot;</span>
+
+<span class="sd">        save_address (str, optional):</span>
+<span class="sd">            Defaults to `pickleddata`</span>
+<span class="sd">            Path to folder you would like to save the pixelated training data</span>
+
+<span class="sd">        verbose (bool, optional):</span>
+<span class="sd">            Defaults to False</span>
+<span class="sd">            Extra verbosity</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        A pickled `pandas.DataFrame`:</span>
+<span class="sd">            with rows of samples</span>
+<span class="sd">            and columns containing the pixelated 0.5, 1.0, 2.0,</span>
+<span class="sd">            and 4.0 duration images as well as a column with the True</span>
+<span class="sd">            true_label and a column with an ID that uniquely identifies that sample</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">Logger</span><span class="p">(</span><span class="s1">&#39;Gravity Spy: Pickling &#39;</span>
+                        <span class="s1">&#39;Trainingset&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">save_address</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;making... &#39;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">save_address</span><span class="p">))</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">save_address</span><span class="p">))</span>
+
+    <span class="n">classes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">path_to_trainingset</span><span class="p">))</span>
+    <span class="n">nb_classes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;The number of classes are </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nb_classes</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;The classes you are pickling are </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+          <span class="n">classes</span><span class="p">))</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">iclass</span> <span class="ow">in</span> <span class="n">classes</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Converting </span><span class="si">{0}</span><span class="s1"> into b/w info&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">iclass</span><span class="p">))</span>
+        <span class="n">images</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_to_trainingset</span><span class="p">,</span> <span class="n">iclass</span><span class="p">)))</span>
+        <span class="n">images</span> <span class="o">=</span> <span class="p">[</span><span class="n">imageidx</span> <span class="k">for</span> <span class="n">imageidx</span> <span class="ow">in</span> <span class="n">images</span> \
+                  <span class="k">if</span> <span class="s1">&#39;L1_&#39;</span> <span class="ow">in</span> <span class="n">imageidx</span> <span class="ow">or</span> <span class="s1">&#39;H1_&#39;</span> <span class="ow">in</span> <span class="n">imageidx</span> <span class="ow">or</span> <span class="s1">&#39;V1_&#39;</span> <span class="ow">in</span> <span class="n">imageidx</span><span class="p">]</span>
+        <span class="c1"># Group each sample into sets of 4 different durations</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">images</span><span class="p">),)</span> <span class="o">*</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">isample</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">:</span>
+            <span class="n">tmpDF</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">idur</span> <span class="ow">in</span> <span class="n">isample</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Converting </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idur</span><span class="p">))</span>
+                <span class="n">image_data</span> <span class="o">=</span> <span class="n">read_image</span><span class="o">.</span><span class="n">read_grayscale</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_to_trainingset</span><span class="p">,</span>
+                                              <span class="n">iclass</span><span class="p">,</span> <span class="n">idur</span><span class="p">),</span> <span class="n">resolution</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+                <span class="n">information_on_image</span> <span class="o">=</span> <span class="n">idur</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span>
+                <span class="n">tmpDF</span><span class="p">[</span><span class="n">information_on_image</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="n">image_data</span><span class="p">]</span>
+            <span class="n">tmpDF</span><span class="p">[</span><span class="s1">&#39;gravityspy_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">information_on_image</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">tmpDF</span><span class="p">[</span><span class="s1">&#39;true_label&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">iclass</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tmpDF</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Finished converting </span><span class="si">{0}</span><span class="s1"> into b/w info&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">iclass</span><span class="p">))</span>
+
+    <span class="n">picklepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_address</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Saving pickled data to </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">picklepath</span><span class="p">))</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">to_pickle</span><span class="p">(</span><span class="n">picklepath</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="make_model"><a class="viewcode-back" href="../../../api/gravityspy_ligo.ml.train_classifier.html#gravityspy_ligo.ml.train_classifier.make_model">[docs]</a><span class="k">def</span> <span class="nf">make_model</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">22</span><span class="p">,</span> <span class="n">nb_epoch</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+               <span class="n">image_order</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;0.5.png&#39;</span><span class="p">,</span> <span class="s1">&#39;1.0.png&#39;</span><span class="p">,</span> <span class="s1">&#39;2.0.png&#39;</span><span class="p">,</span> <span class="s1">&#39;4.0.png&#39;</span><span class="p">],</span>
+               <span class="n">order_of_channels</span><span class="o">=</span><span class="s2">&quot;channels_last&quot;</span><span class="p">,</span>
+               <span class="n">nb_classes</span><span class="o">=</span><span class="mi">22</span><span class="p">,</span> <span class="n">fraction_validation</span><span class="o">=</span><span class="mf">.125</span><span class="p">,</span> <span class="n">fraction_testing</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+               <span class="n">best_model_based_validset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">image_size</span><span class="o">=</span><span class="p">[</span><span class="mi">140</span><span class="p">,</span> <span class="mi">170</span><span class="p">],</span>
+               <span class="n">random_seed</span><span class="o">=</span><span class="mi">1986</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Train a Convultional Neural Net (CNN).</span>
+
+<span class="sd">    This module uses `keras &lt;https://keras.io/&gt;`_ to interface</span>
+<span class="sd">    with the creation of a neural net and currently uses</span>
+<span class="sd">    `theano &lt;http://deeplearning.net/software/theano/&gt;`_ as the backend</span>
+<span class="sd">    for doing the heavy gpu lifting.</span>
+
+<span class="sd">    The optimizer :class:`keras.optimizers.Adadelta`</span>
+
+<span class="sd">    The loss function being optimized is `softmax &lt;https://en.wikipedia.org/wiki/Softmax_function&gt;`_</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        data (str):</span>
+<span class="sd">            Pickle file containing training set data</span>
+
+<span class="sd">        model_name (str, optional):</span>
+<span class="sd">            Defaults to `multi_view_classifier.h5`</span>
+<span class="sd">            path to file you would like to save the model to</span>
+
+<span class="sd">        batch_size (int, optional):</span>
+<span class="sd">            Default 22</span>
+
+<span class="sd">        nb_epoch (int, optional):</span>
+<span class="sd">            Default 40</span>
+
+<span class="sd">        nb_classes (int, optional):</span>
+<span class="sd">            Default 22</span>
+
+<span class="sd">        fraction_validation (float, optional):</span>
+<span class="sd">            Default .125</span>
+
+<span class="sd">        fraction_testing (float, optional):</span>
+<span class="sd">            Default None</span>
+
+<span class="sd">        all_data_for_train_flag (int, optional):</span>
+<span class="sd">            Default 1</span>
+
+<span class="sd">        best_model_based_validset (int,optional):</span>
+<span class="sd">            Default 0</span>
+
+<span class="sd">        image_size (list, optional):</span>
+<span class="sd">            Default [140, 170]</span>
+
+<span class="sd">        random_seed (int, optional):</span>
+<span class="sd">            Default 1986</span>
+
+<span class="sd">        verbose (bool, optional):</span>
+<span class="sd">            Default False</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        filename:</span>
+<span class="sd">            A trained Convultional Neural Network</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">Logger</span><span class="p">(</span><span class="s1">&#39;Gravity Spy: Training &#39;</span>
+                        <span class="s1">&#39;Model&#39;</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Using random seed </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">random_seed</span><span class="p">))</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">random_seed</span><span class="p">)</span>  <span class="c1"># for reproducibility</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;You have selected the follow channel order : </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">order_of_channels</span><span class="p">))</span>
+    <span class="n">K</span><span class="o">.</span><span class="n">set_image_data_format</span><span class="p">(</span><span class="n">order_of_channels</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;You data set contained </span><span class="si">{0}</span><span class="s1"> samples&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)))</span>
+
+    <span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span> <span class="o">=</span> <span class="n">image_size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">image_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;The size of the images being trained </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">image_size</span><span class="p">))</span>
+
+    <span class="n">classes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">true_label</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span> <span class="o">!=</span> <span class="n">nb_classes</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Youre supplied data set does not match the number of&#39;</span>
+                         <span class="s1">&#39; classes you said you were training on&#39;</span><span class="p">)</span>
+
+    <span class="n">classes</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">classes</span><span class="p">))</span>
+    <span class="n">classes</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">),</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">classes</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;You have supplied a training set with the following class&#39;</span>
+                <span class="s1">&#39;idx to str label mapping: </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">classes</span><span class="p">))</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;converting string to idx...&#39;</span><span class="p">)</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">true_label</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">true_label</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">classes</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Selecting samples for validation ...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;You have selected to set aside </span><span class="si">{0}</span><span class="s1"> percent of &#39;</span>
+                <span class="s1">&#39;images per class for validation.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                                       <span class="n">fraction_validation</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span>
+
+    <span class="n">validationDF</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;true_label&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+                       <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="n">fraction_validation</span><span class="p">,</span>
+                       <span class="n">random_state</span><span class="o">=</span><span class="n">random_seed</span><span class="p">)</span>
+                       <span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Removing validation images from training DF ...&#39;</span><span class="p">)</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">data</span><span class="o">.</span><span class="n">gravityspy_id</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span>
+                                    <span class="n">validationDF</span><span class="o">.</span><span class="n">gravityspy_id</span><span class="p">)]</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;There are now </span><span class="si">{0}</span><span class="s1"> samples remaining&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                                                       <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)))</span>
+
+    <span class="k">if</span> <span class="n">fraction_testing</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Selecting samples for testing ...&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;You have selected to set aside </span><span class="si">{0}</span><span class="s1"> percent of &#39;</span>
+                <span class="s1">&#39;images per class for validation.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+
+                                       <span class="n">fraction_testing</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span>
+        <span class="n">testingDF</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;true_label&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+                   <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="n">fraction_testing</span><span class="p">,</span>
+                             <span class="n">random_state</span><span class="o">=</span><span class="n">random_seed</span><span class="p">)</span>
+                   <span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Removing testing images from training DF ...&#39;</span><span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">data</span><span class="o">.</span><span class="n">gravityspy_id</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span>
+                                        <span class="n">testingDF</span><span class="o">.</span><span class="n">gravityspy_id</span><span class="p">)]</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;There are now </span><span class="si">{0}</span><span class="s1"> samples remaining&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                                                           <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)))</span>
+
+    <span class="k">if</span> <span class="n">order_of_channels</span> <span class="o">==</span> <span class="s1">&#39;channels_last&#39;</span><span class="p">:</span>
+        <span class="n">reshape_order</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">order_of_channels</span> <span class="o">==</span> <span class="s1">&#39;channels_first&#39;</span><span class="p">:</span>
+        <span class="n">reshape_order</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Do not understand supplied channel order&quot;</span><span class="p">)</span>
+
+    <span class="c1"># concatenate the pixels</span>
+    <span class="n">train_set_x_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">image_order</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">reshape_order</span><span class="p">)</span>
+    <span class="n">validation_x_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">validationDF</span><span class="p">[</span><span class="n">image_order</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">reshape_order</span><span class="p">)</span>
+
+    <span class="n">train_set_x_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">image_order</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">reshape_order</span><span class="p">)</span>
+    <span class="n">validation_x_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">validationDF</span><span class="p">[</span><span class="n">image_order</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">reshape_order</span><span class="p">)</span>
+
+    <span class="n">train_set_x_3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">image_order</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">reshape_order</span><span class="p">)</span>
+    <span class="n">validation_x_3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">validationDF</span><span class="p">[</span><span class="n">image_order</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">reshape_order</span><span class="p">)</span>
+
+    <span class="n">train_set_x_4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">image_order</span><span class="p">[</span><span class="mi">3</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">reshape_order</span><span class="p">)</span>
+    <span class="n">validation_x_4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">validationDF</span><span class="p">[</span><span class="n">image_order</span><span class="p">[</span><span class="mi">3</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">reshape_order</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fraction_testing</span><span class="p">:</span>
+        <span class="n">testing_x_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">testingDF</span><span class="p">[</span><span class="n">image_order</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">reshape_order</span><span class="p">)</span>
+        <span class="n">testing_x_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">testingDF</span><span class="p">[</span><span class="n">image_order</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">reshape_order</span><span class="p">)</span>
+        <span class="n">testing_x_3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">testingDF</span><span class="p">[</span><span class="n">image_order</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">reshape_order</span><span class="p">)</span>
+        <span class="n">testing_x_4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">testingDF</span><span class="p">[</span><span class="n">image_order</span><span class="p">[</span><span class="mi">3</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">reshape_order</span><span class="p">)</span>
+
+    <span class="c1"># Concatenate the labels</span>
+    <span class="n">trainingset_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;true_label&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+    <span class="n">validation_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">validationDF</span><span class="p">[</span><span class="s1">&#39;true_label&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fraction_testing</span><span class="p">:</span>
+        <span class="n">testing_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">testingDF</span><span class="p">[</span><span class="s1">&#39;true_label&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+
+    <span class="c1"># Concatenate the name</span>
+    <span class="n">trainingset_names</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;gravityspy_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+    <span class="n">validation_names</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">validationDF</span><span class="p">[</span><span class="s1">&#39;gravityspy_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fraction_testing</span><span class="p">:</span>
+        <span class="n">testing_names</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">testingDF</span><span class="p">[</span><span class="s1">&#39;gravityspy_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+
+    <span class="c1"># Categorize labels</span>
+    <span class="n">trainingset_labels</span> <span class="o">=</span> <span class="n">np_utils</span><span class="o">.</span><span class="n">to_categorical</span><span class="p">(</span>
+                                        <span class="n">trainingset_labels</span><span class="p">,</span> <span class="n">nb_classes</span><span class="p">)</span>
+
+    <span class="n">validation_labels</span> <span class="o">=</span> <span class="n">np_utils</span><span class="o">.</span><span class="n">to_categorical</span><span class="p">(</span>
+                                        <span class="n">validation_labels</span><span class="p">,</span> <span class="n">nb_classes</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fraction_testing</span><span class="p">:</span>
+        <span class="n">testing_labels</span> <span class="o">=</span> <span class="n">np_utils</span><span class="o">.</span><span class="n">to_categorical</span><span class="p">(</span>
+                                        <span class="n">testing_labels</span><span class="p">,</span> <span class="n">nb_classes</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Concatenating multiple views ...&#39;</span><span class="p">)</span>
+    <span class="n">concat_train</span> <span class="o">=</span> <span class="n">concatenate_views</span><span class="p">(</span><span class="n">train_set_x_1</span><span class="p">,</span> <span class="n">train_set_x_2</span><span class="p">,</span>
+                            <span class="n">train_set_x_3</span><span class="p">,</span> <span class="n">train_set_x_4</span><span class="p">,</span> <span class="p">[</span><span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">],</span> <span class="kc">False</span><span class="p">,</span> <span class="n">order_of_channels</span><span class="p">)</span>
+    <span class="n">concat_valid</span> <span class="o">=</span> <span class="n">concatenate_views</span><span class="p">(</span><span class="n">validation_x_1</span><span class="p">,</span> <span class="n">validation_x_2</span><span class="p">,</span>
+                            <span class="n">validation_x_3</span><span class="p">,</span> <span class="n">validation_x_4</span><span class="p">,</span>
+                            <span class="p">[</span><span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">],</span> <span class="kc">False</span><span class="p">,</span><span class="n">order_of_channels</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fraction_testing</span><span class="p">:</span>
+        <span class="n">concat_test</span> <span class="o">=</span> <span class="n">concatenate_views</span><span class="p">(</span><span class="n">testing_x_1</span><span class="p">,</span> <span class="n">testing_x_2</span><span class="p">,</span>
+                            <span class="n">testing_x_3</span><span class="p">,</span> <span class="n">testing_x_4</span><span class="p">,</span>
+                            <span class="p">[</span><span class="n">img_rows</span><span class="p">,</span> <span class="n">img_cols</span><span class="p">],</span> <span class="kc">False</span><span class="p">,</span><span class="n">order_of_channels</span><span class="p">)</span>
+
+    <span class="n">cnn1</span> <span class="o">=</span> <span class="n">build_cnn</span><span class="p">(</span><span class="n">img_rows</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="n">img_cols</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="n">order_of_channels</span><span class="p">)</span>
+    <span class="n">final_model</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">()</span>
+    <span class="n">final_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">cnn1</span><span class="p">)</span>
+    <span class="n">final_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="n">nb_classes</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;softmax&#39;</span><span class="p">))</span>
+
+    <span class="n">final_model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="s1">&#39;categorical_crossentropy&#39;</span><span class="p">,</span>
+                        <span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;adadelta&#39;</span><span class="p">,</span>
+                        <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+
+    <span class="n">acc_checker</span> <span class="o">=</span> <span class="n">ModelCheckpoint</span><span class="p">(</span><span class="s2">&quot;best_weights.h5&quot;</span><span class="p">,</span> <span class="n">monitor</span><span class="o">=</span><span class="s1">&#39;val_accuracy&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                  <span class="n">save_best_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">,</span> <span class="n">save_weights_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">final_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">concat_train</span><span class="p">,</span> <span class="n">trainingset_labels</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="n">nb_epoch</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">concat_valid</span><span class="p">,</span> <span class="n">validation_labels</span><span class="p">),</span> <span class="n">callbacks</span><span class="o">=</span><span class="p">[</span><span class="n">acc_checker</span><span class="p">])</span>
+
+    <span class="n">final_model</span><span class="o">.</span><span class="n">load_weights</span><span class="p">(</span><span class="s2">&quot;best_weights.h5&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fraction_testing</span><span class="p">:</span>
+        <span class="n">score</span> <span class="o">=</span> <span class="n">final_model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">concat_test</span><span class="p">,</span> <span class="n">testing_labels</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Test accuracy (last): </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">score</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+        <span class="n">score2</span> <span class="o">=</span> <span class="n">final_model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">concat_valid</span><span class="p">,</span> <span class="n">validation_labels</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;valid accuracy (last): </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">score2</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+        <span class="n">score3</span> <span class="o">=</span> <span class="n">final_model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">concat_train</span><span class="p">,</span> <span class="n">trainingset_labels</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Train accuracy (last): </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">score3</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">score2</span> <span class="o">=</span> <span class="n">final_model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">concat_valid</span><span class="p">,</span> <span class="n">validation_labels</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;valid accuracy (last): </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">score2</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+        <span class="n">score3</span> <span class="o">=</span> <span class="n">final_model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">concat_train</span><span class="p">,</span> <span class="n">trainingset_labels</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Train accuracy (last): </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">score3</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+    <span class="k">return</span> <span class="n">final_model</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Scott Coughlin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

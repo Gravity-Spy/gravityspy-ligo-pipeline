@@ -1,0 +1,21 @@
+gravityspy\_ligo.ml package
+===========================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   gravityspy_ligo.ml.GS_utils
+   gravityspy_ligo.ml.labelling_test_glitches
+   gravityspy_ligo.ml.read_image
+   gravityspy_ligo.ml.train_classifier
+
+Module contents
+---------------
+
+.. automodule:: gravityspy_ligo.ml
+   :members:
+   :undoc-members:
+   :show-inheritance:

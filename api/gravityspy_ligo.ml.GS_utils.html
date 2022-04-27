@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>&lt;no title&gt; &mdash; gravityspy_ligo 0+untagged.1.gba8fda6 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/gravityspy_ligo-docs.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> gravityspy_ligo
+          </a>
+              <div class="version">
+                0+untagged.1.gba8fda6
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../install/index.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../classify/index.html">Classify a Trigger With Gravity Spy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../events/index.html">Classifying A Table of Events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trainmodel/index.html">Running <code class="docutils literal notranslate"><span class="pre">trainmodel</span></code> on the command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Querying Gravity Spy data</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">gravityspy_ligo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>&lt;no title&gt;</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/gravityspy_ligo.ml.GS_utils.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <span class="target" id="module-gravityspy_ligo.ml.GS_utils"></span><p>This file contains different utility functions that are not connected
+in anyway to the networks presented in the tutorials, but rather help in
+processing the outputs into a more understandable way.</p>
+<p>For example <code class="docutils literal notranslate"><span class="pre">tile_raster_images</span></code> helps in generating a easy to grasp
+image from a set of samples or weights.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="gravityspy_ligo.ml.GS_utils.build_cnn">
+<span class="sig-prename descclassname"><span class="pre">gravityspy_ligo.ml.GS_utils.</span></span><span class="sig-name descname"><span class="pre">build_cnn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img_rows</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_cols</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_of_channels</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/ml/GS_utils.html#build_cnn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.ml.GS_utils.build_cnn" title="Permalink to this definition"></a></dt>
+<dd><p>This is where we use Keras to build a covolutional neural network (CNN)</p>
+<p>The CNN built here is described in the
+<a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0020025518301634#tbl0004">Table 5</a></p>
+<p>There are 5 layers. For each layer the logic is as follows</p>
+<p>input 2D matrix –&gt; 2D Conv layer with x number of kernels with a 5 by 5 shape
+–&gt; activation layer we use <a class="reference external" href="https://en.wikipedia.org/wiki/Rectifier_(neural_networks)">ReLU</a>
+–&gt; MaxPooling of size 2 by 2 all pixels are now grouped into bigger pixels of
+size 2 by 2 and the max pixel of the pixels that make up the 2 by 2 pizels is the
+value of the bigger pixel –&gt; Dropout set to 50 percent. This means each pixel
+at this stage has a 50 percent chance of being set to 0.</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><dl class="simple">
+<dt>image_rows (int):</dt><dd><p>This refers to the number of rows in the non-flattened image</p>
+</dd>
+<dt>image_cols (int):</dt><dd><p>This refers to the number of cols in the non-flattened image</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>model (<cite>object</cite>):</dt><dd><p>a CNN</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gravityspy_ligo.ml.GS_utils.concatenate_views">
+<span class="sig-prename descclassname"><span class="pre">gravityspy_ligo.ml.GS_utils.</span></span><span class="sig-name descname"><span class="pre">concatenate_views</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_set1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_set2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_set3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_set4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rgb_flag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_of_channels</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/ml/GS_utils.html#concatenate_views"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.ml.GS_utils.concatenate_views" title="Permalink to this definition"></a></dt>
+<dd><p>Create a merged view from a set of 4 views of one sample image</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><dl class="simple">
+<dt>image_set1 (array):</dt><dd><p>The grayscale downsamples pixels for one duration of one
+of the samples</p>
+</dd>
+<dt>image_set2 (array):</dt><dd><p>The grayscale downsamples pixels for one duration of one
+of the samples</p>
+</dd>
+<dt>image_set3 (array):</dt><dd><p>The grayscale downsamples pixels for one duration of one
+of the samples</p>
+</dd>
+<dt>image_set4 (array):</dt><dd><p>The grayscale downsamples pixels for one duration of one
+of the samples</p>
+</dd>
+<dt>image_size (list):</dt><dd><p>This refers to the shape of the non flattened pixelized image
+array</p>
+</dd>
+<dt>rgb_flag (bool):</dt><dd><p>Are you trying to create a merged view of grayscale
+or RGB image renders</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>concated_view (array):</dt><dd><p>A single merged view of the sample, in the case
+a merged view of the 0.5 1.0 2.0 and 4.0 duration
+omega scans.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gravityspy_ligo.ml.GS_utils.contrastive_loss">
+<span class="sig-prename descclassname"><span class="pre">gravityspy_ligo.ml.GS_utils.</span></span><span class="sig-name descname"><span class="pre">contrastive_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/ml/GS_utils.html#contrastive_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.ml.GS_utils.contrastive_loss" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gravityspy_ligo.ml.GS_utils.cosine_distance">
+<span class="sig-prename descclassname"><span class="pre">gravityspy_ligo.ml.GS_utils.</span></span><span class="sig-name descname"><span class="pre">cosine_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vects</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/ml/GS_utils.html#cosine_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.ml.GS_utils.cosine_distance" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the cosine distance of an array</p>
+<p>Parameters:</p>
+<blockquote>
+<div><p>vect (array):</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gravityspy_ligo.ml.GS_utils.create_pairs3_gen">
+<span class="sig-prename descclassname"><span class="pre">gravityspy_ligo.ml.GS_utils.</span></span><span class="sig-name descname"><span class="pre">create_pairs3_gen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/ml/GS_utils.html#create_pairs3_gen"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.ml.GS_utils.create_pairs3_gen" title="Permalink to this definition"></a></dt>
+<dd><p>Create the pairs</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><dl class="simple">
+<dt>data (float):</dt><dd><p>It is something</p>
+</dd>
+<dt>class_indices (list):</dt><dd><p>It is something</p>
+</dd>
+<dt>batch_size (int):</dt><dd><p>It is something</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gravityspy_ligo.ml.GS_utils.eucl_dist_output_shape">
+<span class="sig-prename descclassname"><span class="pre">gravityspy_ligo.ml.GS_utils.</span></span><span class="sig-name descname"><span class="pre">eucl_dist_output_shape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shapes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/ml/GS_utils.html#eucl_dist_output_shape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.ml.GS_utils.eucl_dist_output_shape" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gravityspy_ligo.ml.GS_utils.siamese_acc">
+<span class="sig-prename descclassname"><span class="pre">gravityspy_ligo.ml.GS_utils.</span></span><span class="sig-name descname"><span class="pre">siamese_acc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thred</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/ml/GS_utils.html#siamese_acc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.ml.GS_utils.siamese_acc" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate simaese accuracy</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><dl class="simple">
+<dt>thred (float):</dt><dd><p>It is something</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gravityspy_ligo.ml.GS_utils.split_data_set">
+<span class="sig-prename descclassname"><span class="pre">gravityspy_ligo.ml.GS_utils.</span></span><span class="sig-name descname"><span class="pre">split_data_set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction_validation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.125</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction_testing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[140,</span> <span class="pre">170]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/ml/GS_utils.html#split_data_set"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.ml.GS_utils.split_data_set" title="Permalink to this definition"></a></dt>
+<dd><p>Split data set to training validation and optional testing</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><dl class="simple">
+<dt>data (str):</dt><dd><p>Pickle file containing training set data</p>
+</dd>
+<dt>fraction_validation (float, optional):</dt><dd><p>Default .125</p>
+</dd>
+<dt>fraction_testing (float, optional):</dt><dd><p>Default None</p>
+</dd>
+<dt>image_size (list, optional):</dt><dd><p>Default [140, 170]</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><p>numpy arrays</p>
+</dd>
+</dl>
+</dd></dl>
+
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Scott Coughlin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

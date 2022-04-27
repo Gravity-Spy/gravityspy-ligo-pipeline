@@ -1,0 +1,4 @@
+.. automodule:: gravityspy_ligo.ml.labelling_test_glitches
+   :members:
+   :undoc-members:
+   :show-inheritance:

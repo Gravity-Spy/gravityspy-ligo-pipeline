@@ -1,0 +1,4 @@
+.. automodule:: gravityspy_ligo.table.events
+   :members:
+   :undoc-members:
+   :show-inheritance:

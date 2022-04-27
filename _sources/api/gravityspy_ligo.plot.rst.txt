@@ -1,0 +1,18 @@
+gravityspy\_ligo.plot package
+=============================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   gravityspy_ligo.plot.plot
+
+Module contents
+---------------
+
+.. automodule:: gravityspy_ligo.plot
+   :members:
+   :undoc-members:
+   :show-inheritance:

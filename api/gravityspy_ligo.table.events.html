@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>&lt;no title&gt; &mdash; gravityspy_ligo 0+untagged.1.gba8fda6 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/gravityspy_ligo-docs.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> gravityspy_ligo
+          </a>
+              <div class="version">
+                0+untagged.1.gba8fda6
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../install/index.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../classify/index.html">Classify a Trigger With Gravity Spy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../events/index.html">Classifying A Table of Events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trainmodel/index.html">Running <code class="docutils literal notranslate"><span class="pre">trainmodel</span></code> on the command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Querying Gravity Spy data</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">gravityspy_ligo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>&lt;no title&gt;</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/gravityspy_ligo.table.events.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <span class="target" id="module-gravityspy_ligo.table.events"></span><dl class="py class">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.Events">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gravityspy_ligo.table.events.</span></span><span class="sig-name descname"><span class="pre">Events</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">masked</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rows</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">descriptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#Events"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.Events" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gwpy.table.gravityspy.GravitySpyTable</span></code></p>
+<p>This class provides method for classifying events with gravityspy</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.Events.classify">
+<span class="sig-name descname"><span class="pre">classify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_cnn</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#Events.classify"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.Events.classify" title="Permalink to this definition"></a></dt>
+<dd><p>Classify triggers in this table</p>
+<p>Parameters:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>path_to_cnn:</dt><dd><p>file name of the CNN you would like to use</p>
+</dd>
+<dt><a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs:</dt><dd><p>nproc : number of parallel event times to be processing at once</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns:</dt><dd><p><cite>Events</cite> table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.Events.cluster">
+<span class="sig-name descname"><span class="pre">cluster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nclusters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#Events.cluster"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.Events.cluster" title="Permalink to this definition"></a></dt>
+<dd><p>Create new clusters from feature space vectors</p>
+<p>Parameters:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>nclusters (int): how many clusters to try to group</dt><dd><p>these triggers into</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns:</dt><dd><p><cite>Events</cite> table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.Events.create_collection">
+<span class="sig-name descname"><span class="pre">create_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">private</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_subject</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#Events.create_collection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.Events.create_collection" title="Permalink to this definition"></a></dt>
+<dd><p>Obtain omicron triggers to run gravityspy on</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><dl class="simple">
+<dt>name (str, optional):</dt><dd><p>name of collection</p>
+</dd>
+<dt>private (bool, optional):</dt><dd><p>would you like this collection to be private or public</p>
+</dd>
+<dt>default_subject (int, optional):</dt><dd><p>subject id to be the cover image of collection</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><p><cite>str</cite> url link to the created collection</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.Events.create_dag">
+<span class="sig-name descname"><span class="pre">create_dag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subfile_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gravityspy.sub'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retry_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#Events.create_dag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.Events.create_dag" title="Permalink to this definition"></a></dt>
+<dd><p>Create a dag file to process all events in table</p>
+<p>Parameters:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>nclusters (int): how many clusters to try to group</dt><dd><p>these triggers into</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns:</dt><dd><p><cite>Events</cite> table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.Events.create_sub">
+<span class="sig-name descname"><span class="pre">create_sub</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_to_cnn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delete_images</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subfile_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gravityspy.sub'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accounting_group_user</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'scott.coughlin'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accounting_group</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ligo.dev.o1.detchar.ch_categorization.glitchzoo'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#Events.create_sub"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.Events.create_sub" title="Permalink to this definition"></a></dt>
+<dd><p>Create a dag file to process all events in table</p>
+<p>Parameters:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>nclusters (int): how many clusters to try to group</dt><dd><p>these triggers into</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns:</dt><dd><p><cite>Events</cite> table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.Events.fetch">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fetch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#Events.fetch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.Events.fetch" title="Permalink to this definition"></a></dt>
+<dd><p>Fetch a table of events from a database</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>format</strong> : <cite>str</cite>, <cite>~sqlalchemy.engine.Engine</cite></p>
+<blockquote>
+<div><p>the format of the remote data, see _Notes_ for a list of
+registered formats, OR an SQL database <cite>Engine</cite> object</p>
+</div></blockquote>
+<p><strong>*args</strong></p>
+<blockquote>
+<div><p>all other positional arguments are specific to the
+data format, see below for basic usage</p>
+</div></blockquote>
+<p><strong>columns</strong> : <cite>list</cite> of <cite>str</cite>, optional</p>
+<blockquote>
+<div><p>the columns to fetch from the database table, defaults to all</p>
+</div></blockquote>
+<p><strong>selection</strong> : <cite>str</cite>, or <cite>list</cite> of <cite>str</cite>, optional</p>
+<blockquote>
+<div><p>one or more column filters with which to downselect the
+returned table rows as they as read, e.g. <code class="docutils literal notranslate"><span class="pre">'snr</span> <span class="pre">&gt;</span> <span class="pre">5'</span></code>;
+multiple selections should be connected by ‘ &amp;&amp; ‘, or given as
+a <cite>list</cite>, e.g. <code class="docutils literal notranslate"><span class="pre">'snr</span> <span class="pre">&gt;</span> <span class="pre">5</span> <span class="pre">&amp;&amp;</span> <span class="pre">frequency</span> <span class="pre">&lt;</span> <span class="pre">1000'</span></code> or
+<code class="docutils literal notranslate"><span class="pre">['snr</span> <span class="pre">&gt;</span> <span class="pre">5',</span> <span class="pre">'frequency</span> <span class="pre">&lt;</span> <span class="pre">1000']</span></code></p>
+</div></blockquote>
+<p><strong>**kwargs</strong></p>
+<blockquote>
+<div><p>all other positional arguments are specific to the
+data format, see the online documentation for more details</p>
+</div></blockquote>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>table</strong> : <cite>EventTable</cite></p>
+<blockquote>
+<div><p>a table of events recovered from the remote database</p>
+</div></blockquote>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The available named formats are:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 19%" />
+<col style="width: 81%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Format</p></th>
+<th class="head"><p>Basic usage</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>gravityspy</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">fetch('gravityspy',</span> <span class="pre">tablename)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>hacr</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">fetch('hacr',</span> <span class="pre">channel,</span> <span class="pre">gpsstart,</span> <span class="pre">gpstop)</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">gwpy.table</span> <span class="kn">import</span> <span class="n">EventTable</span>
+</pre></div>
+</div>
+<p>To download a table of all blip glitches from the Gravity Spy database:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">EventTable</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="s1">&#39;gravityspy&#39;</span><span class="p">,</span> <span class="s1">&#39;glitches&#39;</span><span class="p">,</span> <span class="n">selection</span><span class="o">=</span><span class="s1">&#39;Label=Blip&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To download a table from any SQL-type server</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sqlalchemy.engine</span> <span class="kn">import</span> <span class="n">create_engine</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">engine</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">EventTable</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="s1">&#39;mytable&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.Events.get_triggers">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_triggers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dqflag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#Events.get_triggers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.Events.get_triggers" title="Permalink to this definition"></a></dt>
+<dd><p>Obtain omicron triggers to run gravityspy on</p>
+<p>Parameters:</p>
+<blockquote>
+<div><p>start (int): start of time to look for triggers
+end (int): end time to look for triggers
+channel (str): channel to look for triggers
+dqflag (str): name of segment during which to keep triggers</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns:</dt><dd><p><cite>Events</cite> table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.Events.read">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#Events.read"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.Events.read" title="Permalink to this definition"></a></dt>
+<dd><p>Classify triggers in this table</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><p><cite>gwpy.table.GravitySpyTable</cite></p>
+</dd>
+<dt>Returns:</dt><dd><p><cite>Events</cite> table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.Events.relabel_sample">
+<span class="sig-name descname"><span class="pre">relabel_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_cnn</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#Events.relabel_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.Events.relabel_sample" title="Permalink to this definition"></a></dt>
+<dd><p>This assumes you fetch image data from test_storing_image</p>
+<dl>
+<dt>Parameters:</dt><dd><p>path_to_cnn (<cite>str</cite>): path to file with weights of trained model</p>
+<p><a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs: anything you can pass to keras.model.predict_proba</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.Events.to_glitch_db">
+<span class="sig-name descname"><span class="pre">to_glitch_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GSMetadata'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#Events.to_glitch_db"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.Events.to_glitch_db" title="Permalink to this definition"></a></dt>
+<dd><p>Obtain omicron triggers to run gravityspy on</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><p>table (str): name of SQL table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.Events.to_sql">
+<span class="sig-name descname"><span class="pre">to_sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'glitches_v2d0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">if_exists</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'append'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#Events.to_sql"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.Events.to_sql" title="Permalink to this definition"></a></dt>
+<dd><p>Obtain omicron triggers to run gravityspy on</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><p>table (str): name of SQL table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.Events.update_features">
+<span class="sig-name descname"><span class="pre">update_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_semantic_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nproc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#Events.update_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.Events.update_features" title="Permalink to this definition"></a></dt>
+<dd><p>Obtain omicron triggers to run gravityspy on</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><p>path_to_semantic_model (str): filename of model</p>
+</dd>
+<dt>Returns:</dt><dd><p><cite>Events</cite> table with columns containing new scores</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.Events.update_ldvw">
+<span class="sig-name descname"><span class="pre">update_ldvw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GSMetadata'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#Events.update_ldvw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.Events.update_ldvw" title="Permalink to this definition"></a></dt>
+<dd><p>Obtain omicron triggers to run gravityspy on</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><p>table (str): name of SQL tabl</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.Events.update_scores">
+<span class="sig-name descname"><span class="pre">update_scores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_cnn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nproc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#Events.update_scores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.Events.update_scores" title="Permalink to this definition"></a></dt>
+<dd><p>Obtain omicron triggers to run gravityspy on</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><p>path_to_cnn (str): filename of model</p>
+</dd>
+<dt>Returns:</dt><dd><p><cite>Events</cite> table with columns containing new scores</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.Events.update_sql">
+<span class="sig-name descname"><span class="pre">update_sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'glitches_v2d0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#Events.update_sql"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.Events.update_sql" title="Permalink to this definition"></a></dt>
+<dd><p>Obtain omicron triggers to run gravityspy on</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><p>table (str): name of SQL tabl</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.Events.upload_to_zooniverse">
+<span class="sig-name descname"><span class="pre">upload_to_zooniverse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subject_set_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'1104'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#Events.upload_to_zooniverse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.Events.upload_to_zooniverse" title="Permalink to this definition"></a></dt>
+<dd><p>Obtain omicron triggers to run gravityspy on</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><p>subject_set_id (optional, int) : subject set id to upload to</p>
+</dd>
+<dt>Returns:</dt><dd><p><cite>Events</cite> table</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.get_connection_str">
+<span class="sig-prename descclassname"><span class="pre">gravityspy_ligo.table.events.</span></span><span class="sig-name descname"><span class="pre">get_connection_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gravityspy'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gravityspy.ciera.northwestern.edu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'5432'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'postgresql'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passwd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#get_connection_str"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.get_connection_str" title="Permalink to this definition"></a></dt>
+<dd><p>Create string to pass to create_engine</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gravityspy_ligo.table.events.id_generator">
+<span class="sig-prename descclassname"><span class="pre">gravityspy_ligo.table.events.</span></span><span class="sig-name descname"><span class="pre">id_generator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gravityspy_ligo/table/events.html#id_generator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gravityspy_ligo.table.events.id_generator" title="Permalink to this definition"></a></dt>
+<dd><p>Obtain omicron triggers run gravityspy on</p>
+<p>Parameters:</p>
+<blockquote>
+<div><p>x (str): the item you would like a random id to be generated for</p>
+</div></blockquote>
+<p>Returns:</p>
+</dd></dl>
+
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Scott Coughlin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
