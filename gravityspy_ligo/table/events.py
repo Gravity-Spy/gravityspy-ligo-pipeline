@@ -22,7 +22,8 @@ from gwpy.table import GravitySpyTable
 from gwpy.utils import mp as mp_utils
 from gwpy.table.filter import filter_table
 from gwpy.table.filters import in_segmentlist
-from astropy.table import Column
+from gwpy.time import from_gps
+from astropy.table import Column, vstack
 from keras.models import load_model
 
 from ..utils import log
@@ -36,6 +37,7 @@ import subprocess
 import string
 import random
 import os
+import glob
 import h5py
 
 class Events(GravitySpyTable):
@@ -54,17 +56,18 @@ class Events(GravitySpyTable):
         etg = kwargs.pop('etg', 'OMICRON')
         tab = super(Events, cls).read(*args, **kwargs)
         tab = tab.to_pandas()
-        if 'gravityspy_id' not in tab.columns:
-            tab['gravityspy_id'] = tab.apply(id_generator, 1)
-            tab['image_status'] = 'testing'
-            tab['data_quality'] =  'no_flag'
-            tab['upload_flag'] = 0
-            tab['citizen_score'] = 0.0
-            tab['links_subjects'] = 0
-            tab['url1'] = '' 
-            tab['url2'] = '' 
-            tab['url3'] = ''
-            tab['url4'] = '' 
+        if etg != 'hveto':
+            if 'gravityspy_id' not in tab.columns:
+                tab['gravityspy_id'] = tab.apply(id_generator, 1)
+                tab['image_status'] = 'testing'
+                tab['data_quality'] =  'no_flag'
+                tab['upload_flag'] = 0
+                tab['citizen_score'] = 0.0
+                tab['links_subjects'] = 0
+                tab['url1'] = '' 
+                tab['url2'] = '' 
+                tab['url3'] = ''
+                tab['url4'] = '' 
 
         if etg == 'OMICRON':
             tab['event_id'] = tab['event_id'].apply(int)
@@ -446,7 +449,7 @@ class Events(GravitySpyTable):
 
     @classmethod
     def get_triggers(cls, start, end, channel,
-                     dqflag, verbose=True, **kwargs):
+                     dqflag=None, algorithm='omicron', verbose=True, **kwargs):
         """Obtain omicron triggers to run gravityspy on
 
         Parameters:
@@ -468,22 +471,40 @@ class Events(GravitySpyTable):
 
         detector = channel.split(':')[0]
 
-        logger = log.Logger('Gravity Spy: Fetching Omicron Triggers')
+        if algorithm == 'omicron':
+            logger = log.Logger('Gravity Spy: Fetching Omicron Triggers')
 
-        # Obtain segments that are analysis ready
-        analysis_ready = DataQualityFlag.query('{0}:{1}'.format(detector,
-                                                                dqflag),
-                                              float(start), float(end))
+            # get Omicron triggers
+            files = find_trigger_files(channel,'Omicron',
+                                       float(start),float(end))
 
-        # Display segments for which this flag is true
-        logger.info("Segments for which the {0} Flag "
-                    "is active: {1}".format(dqflag, analysis_ready.active))
+            triggers = cls.read(files, tablename='sngl_burst', format='ligolw')
 
-        # get Omicron triggers
-        files = find_trigger_files(channel,'Omicron',
-                                   float(start),float(end))
+        elif algorithm == 'hveto':
+            logger = log.Logger('Gravity Spy: HVeto')
 
-        triggers = cls.read(files, tablename='sngl_burst', format='ligolw')
+            # based on the start and end time, produce a date timestamp with YYYYMMDD
+            # convert start time from gps to regular date
+            start_time_in_date_format = from_gps(start)
+            end_time_in_date_format = from_gps(end)
+
+            date_range_in_YYYYMMDD_format = pandas.date_range(start_time_in_date_format, end_time_in_date_format).strftime("%Y%m%d")
+
+            triggers = cls()
+
+            for date in date_range_in_YYYYMMDD_format:
+                file_with_event_time_data = glob.glob("/home/detchar/public_html/hveto/day/{0}/latest/triggers/{1}-HVETO_RAW_TRIGS_ROUND_0*.txt".format(date, detector))
+                if file_with_event_time_data != []:
+                    trigger_table = cls.read(file_with_event_time_data[0], format='ascii', etg=algorithm)
+                triggers = vstack([triggers, trigger_table])
+
+            # filter out any triggers outside of our GPS start and GPS end time
+            def filter_start_and_end(column, interval):
+                return (column >= interval[0]) & (column < interval[1])
+
+            triggers = triggers.filter(('time', filter_start_and_end, (start, end)))
+        else:
+            raise ValueError("get_triggers only works for algorithm hveto and omicron")
 
         logger.info("Number of triggers "
                     "before any filtering: {0}".format(len(triggers)))
@@ -510,17 +531,27 @@ class Events(GravitySpyTable):
         if not snr_min is None:
             triggers = triggers.filter('snr >= {0}'.format(snr_min))
 
-        # Set peakGPS
+        if dqflag is not None:
+            # Obtain segments that are analysis ready
+            analysis_ready = DataQualityFlag.query('{0}:{1}'.format(detector,
+                                                                    dqflag),
+                                                  float(start), float(end))
 
-        logger.info("Number of triggers after "
-                    "snr, frequency, and duration filters "
-                    "cuts but before {0} flag filtering: "
-                    "{1}".format(dqflag, len(triggers)))
+            # Display segments for which this flag is true
+            logger.info("Segments for which the {0} Flag "
+                        "is active: {1}".format(dqflag, analysis_ready.active))
 
-        # Filter the raw omicron triggers against the ANALYSIS READY flag.
-        triggers = filter_table(triggers, ('event_time', in_segmentlist, analysis_ready.active))
+            # Set peakGPS
+            logger.info("Number of triggers after "
+                        "snr, frequency, and duration filters "
+                        "cuts but before {0} flag filtering: "
+                        "{1}".format(dqflag, len(triggers)))
+
+            # Filter the raw omicron triggers against the ANALYSIS READY flag.
+            triggers = filter_table(triggers, ('event_time', in_segmentlist, analysis_ready.active))
 
         logger.info("Final trigger length: {0}".format(len(triggers)))
+
 
         return triggers
 

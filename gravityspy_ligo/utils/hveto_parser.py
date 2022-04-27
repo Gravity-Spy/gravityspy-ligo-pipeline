@@ -45,18 +45,4 @@ def hveto_parser(infile):
     chnl = chnl[sig_idx]
     id = id[sig_idx]
 
-    outfilename = 'HVETO_' +  infile[infile.find('DROP_') + 5:-4] + '.txt'
-    outfile = open(outfilename, 'w')
-
-    outfile.write('# printing the top ' + str(N)  + ' channels in order of hveto significance \n')
-    outfile.write('\n')
-    outfile.write( win_chnl + '    winning channel' +  '\n')
-
-    for ii in range(N-1):
-        outfile.write(chnl[ii] + '\n')
-
-    outfile.close()
-
-if __name__ ==  '__main__':
-
-    hveto_parser(sys.argv[1])
+    return win_chnl, chnl, sig
