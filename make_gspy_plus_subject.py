@@ -1,5 +1,5 @@
 
-m gravityspy_ligo.subject.subject import GravitySpySubject 
+from gravityspy_ligo.subject.subject import GravitySpySubject 
 from gravityspy_ligo.table.events import Events
 from gravityspy_ligo.utils import utils
 
