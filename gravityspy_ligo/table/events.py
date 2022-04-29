@@ -493,10 +493,12 @@ class Events(GravitySpyTable):
             triggers = cls()
 
             for date in date_range_in_YYYYMMDD_format:
-                file_with_event_time_data = glob.glob("/home/detchar/public_html/hveto/day/{0}/latest/triggers/{1}-HVETO_RAW_TRIGS_ROUND_0*.txt".format(date, detector))
+                file_with_event_time_data = glob.glob("/home/detchar/public_html/hveto/day/{0}/latest/triggers/*HVETO_VETOED_TRIGS_ROUND*.txt".format(date))
                 if file_with_event_time_data != []:
-                    trigger_table = cls.read(file_with_event_time_data[0], format='ascii', etg=algorithm)
-                triggers = vstack([triggers, trigger_table])
+                    for hveto_round in file_with_event_time_data:
+                        trigger_table = cls.read(hveto_round, format='ascii', etg=algorithm)
+                        trigger_table['hveto_round'] = hveto_round.split('ROUND')[-1].split('-')[0].split('_')[-1]
+                        triggers = vstack([triggers, trigger_table])
 
             # filter out any triggers outside of our GPS start and GPS end time
             def filter_start_and_end(column, interval):
