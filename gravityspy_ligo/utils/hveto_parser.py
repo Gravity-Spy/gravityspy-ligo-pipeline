@@ -12,7 +12,7 @@ def hveto_parser(infile):
 
     f = open(infile, 'r')
 
-    id, chnl, sig = [], [], []
+    plot_id, chnl, sig = [], [], []
 
     for line in f:
 
@@ -27,7 +27,7 @@ def hveto_parser(infile):
             line3 = next(f)
             line4 = next(f)
 
-            id.append( int( line0[line0.find('-') + 1 : line0.find('v')-2] )  )
+            plot_id.append( int( line0[line0.find('-') + 1 : line0.find('v')-2] )  )
             chnl.append( line4[line4.find('>') + 1 : -8 ]  )
 
             #xsig.append(float(line4[line4.find('x=')+ 3 : line4.find('y=')- 2] ))
@@ -36,13 +36,16 @@ def hveto_parser(infile):
     # clsoe f
     f.close()
 
-    id = np.array(id)
+    plot_id = np.array(plot_id)
     chnl = np.array(chnl)
     sig = np.array(sig)
 
     sig_idx = np.argsort(sig)
     sig = sig[sig_idx]
     chnl = chnl[sig_idx]
-    id = id[sig_idx]
+    plot_id = plot_id[sig_idx]
 
-    return win_chnl, chnl, sig
+    all_channels_in_order = [win_chnl]
+    all_channels_in_order.extend(chnl.tolist())
+
+    return all_channels_in_order

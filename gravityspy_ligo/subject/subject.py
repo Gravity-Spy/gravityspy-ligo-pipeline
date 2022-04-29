@@ -61,37 +61,40 @@ class GravitySpySubject:
 
             self.list_of_auxiliary_channel_names = manual_list_of_auxiliary_channel_names
 
-            # create the final list of all channels and frametypes associated with this subject
-            # Append main channel name and frametype
-            self.all_channels.append(self.main_channel)
-            self.frametypes.append('{0}_HOFT_C00'.format(ifo))
-            # Append aux channel names and frametype
-            for aux_channel in self.list_of_auxiliary_channel_names:
-                self.frametypes.append('{0}_R'.format(ifo))
-            self.all_channels.extend(self.list_of_auxiliary_channel_names)
-
             # no matter what was passed, override these to be None
             self.number_of_aux_channels_to_show = None
             self.auxiliary_channel_correlation_algorithm = None
-        else:
+        elif 'hveto' in auxiliary_channel_correlation_algorithm.keys():
+
+            # if we passed 'hveto' as our algorith, we must also have identified what round this glitch is associated with.
+            round_number = auxiliary_channel_correlation_algorithm['hveto']
+
             self.auxiliary_channel_correlation_algorithm = auxiliary_channel_correlation_algorithm
             self.number_of_aux_channels_to_show = number_of_aux_channels_to_show
-            if self.auxiliary_channel_correlation_algorithm == 'hveto':
-                # based on the start and end time, produce a date timestamp with YYYYMMDD
-                # convert start time from gps to regular date
-                event_time_in_date_format = time.from_gps(self.event_time)
 
-                event_time_in_YYYYMMDD_format = event_time_in_date_format.strftime("%Y%m%d")
+            # based on the start and end time, produce a date timestamp with YYYYMMDD
+            # convert start time from gps to regular date
+            event_time_in_date_format = time.from_gps(self.event_time)
 
-                each_rounds_svg_file = glob.glob("/home/detchar/public_html/hveto/day/{0}/latest/plots/*.svg".format(event_time_in_YYYYMMDD_format))
+            event_time_in_YYYYMMDD_format = event_time_in_date_format.strftime("%Y%m%d")
 
-                for each_round_svg in each_rounds_svg_file:
-                    print(each_round_svg)
-                    win_chnl, chnl, sig = hveto_parser.hveto_parser(each_round_svg)
-                breakpoint()
-                print("hello")
-            self.list_of_auxiliary_channel_names = None
+            each_rounds_svg_file = glob.glob("/home/detchar/public_html/hveto/day/{0}/latest/plots/*ROUND_{1}*.svg".format(event_time_in_YYYYMMDD_format, round_number))
 
+            for each_round_svg in each_rounds_svg_file:
+                auxiliary_channels_ordered_by_signifigance = hveto_parser.hveto_parser(each_round_svg)
+
+            self.list_of_auxiliary_channel_names = auxiliary_channels_ordered_by_signifigance[0:number_of_aux_channels_to_show]
+        else:
+            raise ValueError("You supplied a auxiliary_channel_correlation_algorithm that is not recognized")
+
+        # create the final list of all channels and frametypes associated with this subject
+        # Append main channel name and frametype
+        self.all_channels.append(self.main_channel)
+        self.frametypes.append('{0}_HOFT_C00'.format(ifo))
+        # Append aux channel names and frametype
+        for aux_channel in self.list_of_auxiliary_channel_names:
+            self.frametypes.append('{0}_R'.format(ifo))
+        self.all_channels.extend(self.list_of_auxiliary_channel_names)
 
     def make_omega_scans(self, pool=None, **kwargs):
         # Parse key word arguments
@@ -115,13 +118,8 @@ class GravitySpySubject:
 
         # raise exceptions (from multiprocessing, single process raises inline)
         for event_time, q_transform, q_value in output:
-            if isinstance(q_value, Exception):
-                q_value.args = ('Failed to make q scan at time %s: %s' % (event_time,
-                                                                    str(q_value)),)
-                raise q_value
-            else:
-                self.q_values.append(q_value)
-                self.q_transforms.append(q_transform)
+            self.q_values.append(q_value)
+            self.q_transforms.append(q_transform)
 
         box_x =  self.q_transforms[0].box_x
         box_y =  self.q_transforms[0].box_y
@@ -154,13 +152,8 @@ class GravitySpySubject:
                               inputs)
 
         for event_time, individual_image_filenames, combined_image_filename in output:
-            if isinstance(q_value, Exception):
-                q_value.args = ('Failed to make q scan at time %s: %s' % (event_time,
-                                                                    str(q_value)),)
-                raise q_value
-            else:
-                self.ldvw_glitchdb_image_filenames.append(combined_image_filename)
-                self.zooniverse_subject_image_filenames.extend(individual_image_filenames)
+            self.ldvw_glitchdb_image_filenames.append(combined_image_filename)
+            self.zooniverse_subject_image_filenames.extend(individual_image_filenames)
 
     def combine_images_for_subject_upload(self):
         for image_filename in self.zooniverse_subject_image_filenames:

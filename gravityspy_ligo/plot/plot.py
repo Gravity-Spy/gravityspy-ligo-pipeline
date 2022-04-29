@@ -96,7 +96,8 @@ def plot_qtransform(spectrogram, plot_normalized_energy_range, plot_time_ranges,
     ind_fig_all = []
 
     for dur in plot_time_ranges:
-        ind_fig = spectrogram.crop(start_time-dur/2,start_time+dur/2).plot(figsize=[8, 6])
+        spec = spectrogram.crop(start_time-dur/2,start_time+dur/2)
+        ind_fig = spec.plot(figsize=[8, 6])
 
         ax = ind_fig.gca()
         ax.set_position([0.125, 0.1, 0.775, 0.8])
@@ -139,15 +140,16 @@ def plot_qtransform(spectrogram, plot_normalized_energy_range, plot_time_ranges,
 
         ind_fig_all.append(ind_fig)
 
-    breakpoint()
     # Create one image containing all spectogram grams
-    super_fig, axes = pyplot.subplots(nrows=1, ncols=len(specsgrams),
+    super_fig, axes = pyplot.subplots(nrows=1, ncols=len(plot_time_ranges),
                                       sharey=True,
                                       subplot_kw={'xscale': 'auto-gps'},
                                       figsize=(27, 6), FigureClass=Plot)
     count = 0
 
-    for iax, spec in zip(axes, specsgrams):
+    for iax, dur in zip(axes, plot_time_ranges):
+        spec = spectrogram.crop(start_time-dur/2,start_time+dur/2)
+
         iax.imshow(spec)
 
         iax.set_yscale('log', base=2)
