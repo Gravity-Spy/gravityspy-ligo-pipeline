@@ -222,19 +222,6 @@ class GravitySpySubject:
         Returns:
             `Events` table
         """
-<<<<<<< HEAD
-        subject = panoptes_client.Subject()
-        subject.links.project = project
-        subject.metadata['date'] = datetime.datetime.now().strftime('%Y%m%d')
-        subject.metadata['subject_id'] = str(self.gravityspy_id)
-        for idx, image in enumerate(self.zooniverse_subject_image_filenames):
-            subject.add_location(str(image))
-            subject.metadata['Filename{0}'.format(idx+1)] = image.split('/')[-1]
-        subject.save()
-        self.zooniverse_id = int(subject.id)
-        for idx, image in enumerate(self.ldvw_glitchdb_image_filenames):
-            setattr(self, 'url{0}'.format(idx), subject.raw['locations'][idx]['image/png'].split('?')[0])
-=======
         for subject_part, subject_part_data in self.zooniverse_subject_image_filenames.items():
             images_for_subject_part = sorted(subject_part_data['images_to_upload'], reverse=True)
             subject = panoptes_client.Subject()
@@ -250,7 +237,6 @@ class GravitySpySubject:
             self.zooniverse_id = int(subject.id)
             for idx, image in enumerate(images_for_subject_part):
                 setattr(self, 'url{0}'.format(idx), subject.raw['locations'][idx]['image/png'].split('?')[0])
->>>>>>> main
 
             subjectset = panoptes_client.SubjectSet.find(subject_set_id)
             subjectset.add(subject)
