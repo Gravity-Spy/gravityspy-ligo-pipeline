@@ -19,7 +19,10 @@
 from ..utils import utils, hveto_parser
 from ..table.events import id_generator
 from gwpy import time
+from PIL import Image
+from itertools import groupby
 import multiprocessing
+import numpy
 import os
 import datetime
 import panoptes_client
@@ -30,7 +33,7 @@ import numpy as np
 class GravitySpySubject:
     """The frame work for thinking about a single Gravity Spy subject
     """
-    def __init__(self, event_time, ifo, gravityspy_id=None, event_generator=None, auxiliary_channel_correlation_algorithm=None, number_of_aux_channels_to_show=None, manual_list_of_auxiliary_channel_names=None):
+    def __init__(self, event_time, ifo, config, gravityspy_id=None, event_generator=None, auxiliary_channel_correlation_algorithm=None, number_of_aux_channels_to_show=None, manual_list_of_auxiliary_channel_names=None):
         """Example of docstring on the __init__ method.
         Args:
             event_time (float): The GPS time at which an excess noise event occurred.
@@ -47,6 +50,7 @@ class GravitySpySubject:
         self.ifo = ifo
         self.main_channel = '{0}:GDS-CALIB_STRAIN'.format(ifo)
         self.event_generator = event_generator
+        self.config = config
         self.all_channels = []
         self.frametypes = []
         self.q_values = []
@@ -100,11 +104,10 @@ class GravitySpySubject:
 
     def make_omega_scans(self, pool=None, **kwargs):
         # Parse key word arguments
-        config = kwargs.pop('config', utils.GravitySpyConfigFile())
         verbose = kwargs.pop('verbose', False)
         nproc = kwargs.pop('nproc', 1)
 
-        inputs = ((self.event_time, config, channel_name, frametype, verbose)
+        inputs = ((self.event_time, self.config, channel_name, frametype, verbose)
                   for channel_name, frametype, in zip(self.all_channels, self.frametypes))
 
         # make q_scans
@@ -135,12 +138,11 @@ class GravitySpySubject:
 
     def save_omega_scans(self, pool=None, **kwargs):
         # Parse key word arguments
-        config = kwargs.pop('config', utils.GravitySpyConfigFile())
         plot_directory = kwargs.pop('plot_directory', os.path.join(os.getcwd(), 'plots', time.from_gps(self.event_time).strftime('%Y-%m-%d'), str(self.event_time)))
         verbose = kwargs.pop('verbose', False)
         nproc = kwargs.pop('nproc', 1)
 
-        inputs = inputs = ((self.event_time, self.ifo, '{0}_{1}'.format(self.gravityspy_id, channel_name), config, plot_directory, channel_name, frametype, verbose, q_transform) for channel_name, frametype, q_transform in zip(self.all_channels, self.frametypes, self.q_transforms))
+        inputs = inputs = ((self.event_time, self.ifo, '{0}_{1}'.format(self.gravityspy_id, channel_name), self.config, plot_directory, channel_name, frametype, verbose, q_transform) for channel_name, frametype, q_transform in zip(self.all_channels, self.frametypes, self.q_transforms))
 
         # make q_scans
         if (pool is None) and (nproc > 1):
@@ -157,6 +159,7 @@ class GravitySpySubject:
             self.ldvw_glitchdb_image_filenames.append(combined_image_filename)
             self.zooniverse_subject_image_filenames.extend(individual_image_filenames)
 
+<<<<<<< HEAD
     def combine_images_for_subject_upload(self, **kwargs):
         config = kwargs.pop('config', utils.GravitySpyConfigFile())
         plot_directory = kwargs.pop('plot_directory', os.path.join(os.getcwd(), 'plots', time.from_gps(self.event_time).strftime('%Y-%m-%d'), str(self.event_time)))
@@ -177,6 +180,63 @@ class GravitySpySubject:
                                  )
             	plt.savefig(vertical_combined_image_filename, dpi = 100)
             	self.ldvw_glitchdb_image_filenames.append(vertical_combined_image_filename)
+=======
+    def combine_images_for_subject_upload(self, number_of_rows=3, **kwargs):
+        plot_directory = kwargs.pop('plot_directory', os.path.join(os.getcwd(), 'plots', time.from_gps(self.event_time).strftime('%Y-%m-%d'), str(self.event_time)))
+
+        # group the images by their durations
+        f = lambda x: x.split('_')[-1]
+        images_grouped_by_duration = [list(g) for k, g in groupby(sorted(self.zooniverse_subject_image_filenames, key=f), key=f)]
+
+        def group_non_main_channels(lst, n):
+            return zip(*[iter(lst)]*n)
+
+        all_images_to_combine = {}
+        for images_with_a_given_duration in images_grouped_by_duration:
+             main_channel_file = [x for x in images_with_a_given_duration if self.main_channel in x]
+             non_main_channel_files = [x for x in images_with_a_given_duration if self.main_channel not in x]
+             non_main_channel_files_in_chunks = list(group_non_main_channels(non_main_channel_files, number_of_rows))
+             number_of_grouping = len(non_main_channel_files_in_chunks)
+             main_channel_file = [main_channel_file]*number_of_grouping
+             for idx, main_channel in enumerate(main_channel_file):
+                 if "subject_part_{0}".format(idx+1) not in all_images_to_combine.keys():
+                     all_images_to_combine["subject_part_{0}".format(idx+1)] = [] 
+                 main_channel_copy = main_channel.copy()
+                 main_channel_copy.extend(non_main_channel_files_in_chunks[idx])
+                 all_images_to_combine["subject_part_{0}".format(idx+1)].append(main_channel_copy)
+
+        self.zooniverse_subject_image_filenames = {}
+        for subject_part, all_image_files_for_this_part in all_images_to_combine.items():
+            if subject_part not in self.zooniverse_subject_image_filenames.keys():
+                 self.zooniverse_subject_image_filenames[subject_part] = {}
+                 self.zooniverse_subject_image_filenames[subject_part]['images_to_upload'] = []
+
+            for images_to_combine in all_image_files_for_this_part:
+                # creating a new image and pasting 
+                # the images
+                combined_image = Image.new("RGB", (800, 600 * (number_of_rows + 1)), "white")
+
+                all_channels = []
+                for image_idx, image_filename in enumerate(images_to_combine):
+                    # channel_name
+                    channel_name = image_filename.split('_', 2)[-1].split('_spectrogram')[0]
+                    all_channels.append(channel_name)
+
+                    # obtain duration from filename
+                    duration = image_filename.split('_')[-1].replace('.png', '')
+
+                    # opening up of images
+                    sub_image = Image.open(image_filename)
+
+                    # pasting the first image (image_name,
+                    # (position))
+                    combined_image.paste(sub_image, (0, 0 + 600*image_idx))
+
+                combined_image_filename = os.path.join(plot_directory, '{0}_{1}_{2}_{3}.png'.format(self.ifo, self.event_time, subject_part, duration))
+                combined_image.save(combined_image_filename)
+                self.zooniverse_subject_image_filenames[subject_part]['images_to_upload'].extend([combined_image_filename])
+                self.zooniverse_subject_image_filenames[subject_part]['channels_in_this_subject'] = all_channels
+>>>>>>> e579e511c6e913a9d52f3f8e9b25bc686a701737
 
     def upload_to_zooniverse(self, subject_set_id, project='9979'):
         """Obtain omicron triggers to run gravityspy on
@@ -187,17 +247,21 @@ class GravitySpySubject:
         Returns:
             `Events` table
         """
-        subject = panoptes_client.Subject()
-        subject.links.project = project
-        subject.metadata['date'] = datetime.datetime.now().strftime('%Y%m%d')
-        subject.metadata['subject_id'] = str(self.gravityspy_id)
-        for idx, image in enumerate(self.zooniverse_subject_image_filenames):
-            subject.add_location(str(image))
-            subject.metadata['Filename{0}'.format(idx+1)] = image.split('/')[-1]
-        subject.save()
-        self.zooniverse_id = int(subject.id)
-        for idx, image in enumerate(self.ldvw_glitchdb_image_filenames):
-            setattr(self, 'url{0}'.format(idx), subject.raw['locations'][idx]['image/png'].split('?')[0])
+        for subject_part, subject_part_data in self.zooniverse_subject_image_filenames.items():
+            images_for_subject_part = sorted(subject_part_data['images_to_upload'], reverse=True)
+            subject = panoptes_client.Subject()
+            subject.links.project = project
+            subject.metadata['date'] = datetime.datetime.now().strftime('%Y%m%d')
+            subject.metadata['subject_id'] = str(self.gravityspy_id)
+            for idx, channel_name in enumerate(subject_part_data['channels_in_this_subject']):
+                subject.metadata['channel_name_{0}'.format(idx+1)] = channel_name
+            for idx, image in enumerate(images_for_subject_part):
+                subject.add_location(str(image))
+                subject.metadata['Filename{0}'.format(idx+1)] = image.split('/')[-1]
+            subject.save()
+            self.zooniverse_id = int(subject.id)
+            for idx, image in enumerate(images_for_subject_part):
+                setattr(self, 'url{0}'.format(idx), subject.raw['locations'][idx]['image/png'].split('?')[0])
 
-        subjectset = panoptes_client.SubjectSet.find(subject_set_id)
-        subjectset.add(subject)
+            subjectset = panoptes_client.SubjectSet.find(subject_set_id)
+            subjectset.add(subject)
