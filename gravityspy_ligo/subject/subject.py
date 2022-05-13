@@ -182,7 +182,7 @@ class GravitySpySubject:
                  main_channel_copy = main_channel.copy()
                  main_channel_copy.extend(non_main_channel_files_in_chunks[idx])
                  all_images_to_combine["subject_part_{0}".format(idx+1)].append(main_channel_copy)
-
+                 
         self.zooniverse_subject_image_filenames = {}
         for subject_part, all_image_files_for_this_part in all_images_to_combine.items():
             if subject_part not in self.zooniverse_subject_image_filenames.keys():
