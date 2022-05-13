@@ -24,6 +24,8 @@ import os
 import datetime
 import panoptes_client
 import glob
+import matplotlib.pyplot as plt
+import numpy as np
 
 class GravitySpySubject:
     """The frame work for thinking about a single Gravity Spy subject
@@ -155,10 +157,26 @@ class GravitySpySubject:
             self.ldvw_glitchdb_image_filenames.append(combined_image_filename)
             self.zooniverse_subject_image_filenames.extend(individual_image_filenames)
 
-    def combine_images_for_subject_upload(self):
-        for image_filename in self.zooniverse_subject_image_filenames:
+    def combine_images_for_subject_upload(self, **kwargs):
+        config = kwargs.pop('config', utils.GravitySpyConfigFile())
+        plot_directory = kwargs.pop('plot_directory', os.path.join(os.getcwd(), 'plots', time.from_gps(self.event_time).strftime('%Y-%m-%d'), str(self.event_time)))
+        for dur in config.plot_time_ranges:
+            substring = str(dur) +'.png'
+            figs = []
+            for image_filename in self.zooniverse_subject_image_filenames:
+                if substring in image_filename:
+                    fig = plt.imread(image_filename)
+                    figs.append(fig)
             breakpoint()
-
+            if len(figs):
+            	merge = np.concatenate((figs[0:-1]), axis = 0)
+            	plt.imshow(merge)
+            	vertical_combined_image_filename = os.path.join(
+                                  plot_directory,
+                                  '_spectrogram_' + substring
+                                 )
+            	plt.savefig(vertical_combined_image_filename, dpi = 100)
+            	self.ldvw_glitchdb_image_filenames.append(vertical_combined_image_filename)
 
     def upload_to_zooniverse(self, subject_set_id, project='9979'):
         """Obtain omicron triggers to run gravityspy on
