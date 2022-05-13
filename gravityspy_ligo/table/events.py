@@ -499,7 +499,6 @@ class Events(GravitySpyTable):
                         trigger_table = cls.read(hveto_round, format='ascii', etg=algorithm)
                         trigger_table['hveto_round'] = hveto_round.split('ROUND')[-1].split('-')[0].split('_')[-1]
                         triggers = vstack([triggers, trigger_table])
-
             # filter out any triggers outside of our GPS start and GPS end time
             def filter_start_and_end(column, interval):
                 return (column >= interval[0]) & (column < interval[1])
