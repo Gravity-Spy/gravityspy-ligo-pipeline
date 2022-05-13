@@ -1,6 +1,7 @@
 # Workflow:
+In this Ligo/Hveto to Zooniverse workflow, given an event time of Gravity Spy event at which an excess noise event occurred, the interferometer id, the round number of Hveto rounds and number of auxiliary channels, return a set of combination images for main channel and auxiliary channels with highest correlation in multiple durations and upload it to the zooniverse project set.
 
-# Modified files:
+# Modified Files:
 subject.py, plot.py, utils.py, hveto_parser.py, table/events.py
 
 # APIs in Example Run: 
@@ -44,10 +45,10 @@ Save the image as the .png file.
     pool (object)[optional, None]: To specify the pool of processes by passing the pre-defined object instead of using the multiprocessing module. It supports asynchronous results with timeouts and callbacks and has a parallel map implementation.
 
 # combine_images_for_subject_upload(self, number_of_rows=3, **kwargs):
-Concatenate the main channel spectrogram with auxiliary channel spectrograms vertically (main channel spectrogram with number_of_rows auxiliary channel spectrograms for each time duration at a time) to get combined images. Also name this image with the ifo_event_subjectpartnum_duration.
+Concatenate the main channel spectrogram with auxiliary channel spectrograms vertically(main channel spectrogram with number_of_rows auxiliary channel spectrograms for each time duration at a time) to get combined images. If the number auxiliary channels exceed the number of rows, the multiple parts will be automatically divided. Also name this image with the ifo_event_subject-part-number_duration.
 ## parameters:
     plot_directory (path)[optional, os.path.join(os.getcwd(), 'plots', time.from_gps(self.event_time).strftime('%Y-%m-%d'), str(self.event_time))]: The directory image file saved to.
-    number_of_rows: the number of rows of spectrogram except for the main channel one in a single combined image. The spectrogram of a auxiliary channel occupies a row from top to bottom.
+    number_of_rows (int): the number of rows of spectrogram except for the main channel one in a single combined image. The spectrogram of a auxiliary channel occupies a row from top to bottom.
 
 # upload_to_zooniverse(self, subject_set_id, project='9979'):
 upload the images as well as the metadata that contains the date of upload, filenames, subject_id, main channel name and auxiliary channel names.
