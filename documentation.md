@@ -24,20 +24,20 @@ Or iterate with event_time and round in the list of event_time:
 ## list_of_glitch_times = list_of_glitch_times[0:2]
 ## for event_time, round_number in zip(list_of_glitch_times['time'], list_of_glitch_times['hveto_round']):
 
-# make_omega_scans(verbose=True, config=config):
+# make_omega_scans(verbose=True):
 For the main channel and top N auxiliary channels individually, use subject.make_omega_scans to get the raw time-series data from Ligo and plot spectrogram with specified plot_time_ranges.
 ## parameters:
     verbose:
-    plot_time_ranges:
-    
-# save_omega_scans(verbose=True, config=config):
+    nproc:    
+# save_omega_scans(verbose=True):
 ## config = utils.GravitySpyConfigFile(plot_time_ranges=[8.0, 4.0, 1.0])
 Save the spectrogram as the png file.
 
 ## parameters:
-    verbose:
-    nproc:
-    pool:
+    verbose (bool)[optional, False]:
+    nproc (int)[optional, 1]:
+    pool (???)[optional, None]:
+    plot_directory = kwargs.pop('plot_directory', os.path.join(os.getcwd(), 'plots', time.from_gps(self.event_time).strftime('%Y-%m-%d'), str(self.event_time)))
     The pool is to use the multiprocessing with nproc number of processors.
 
 
@@ -46,6 +46,7 @@ Concatenate the main channel spectrogram with auxiliary channel spectrograms ver
 
 ## parameters:
     number_of_rows:
+    
 
 
 # upload_to_zooniverse(self, subject_set_id, project='9979'):

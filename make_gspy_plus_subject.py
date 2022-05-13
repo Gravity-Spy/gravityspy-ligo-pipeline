@@ -15,11 +15,12 @@ list_of_glitch_times = Events.get_triggers(start=start_time, end=end_time, chann
 list_of_glitch_times = list_of_glitch_times[0:2]
 
 for event_time, round_number in zip(list_of_glitch_times['time'], list_of_glitch_times['hveto_round']):
-    sub = GravitySpySubject(event_time=event_time, ifo="H1", auxiliary_channel_correlation_algorithm={'hveto':round_number}, number_of_aux_channels_to_show=2)
-    sub.make_omega_scans(verbose=True, config=config)
-    sub.save_omega_scans(verbose=True, config=config)
+    sub = GravitySpySubject(event_time=event_time, ifo="H1", config=config, auxiliary_channel_correlation_algorithm={'hveto':round_number}, number_of_aux_channels_to_show=2)
+    sub.make_omega_scans(verbose=True)
+    sub.save_omega_scans(verbose=True)
     # This method needs to be written
     sub.combine_images_for_subject_upload()
+    breakpoint()
     # no need to upload data to zooniverse until we finalize the way we combine the spectrograms into a single user friendly image
-    #sub.upload_to_zooniverse(subject_set_id=103434)
+    sub.upload_to_zooniverse(subject_set_id=103434)
 
