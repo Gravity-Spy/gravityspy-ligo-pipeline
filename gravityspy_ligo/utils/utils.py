@@ -61,6 +61,10 @@ def make_q_scans(event_time, **kwargs):
     frametype = kwargs.pop('frametype', None)
     verbose = kwargs.pop('verbose', False)
 
+
+    if timeseries is not None:
+        channel_name = timeseries.name
+
     if verbose:
         logger = log.Logger('Gravity Spy: Making Q Scans')
 
