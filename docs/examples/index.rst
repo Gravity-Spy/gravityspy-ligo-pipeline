@@ -27,14 +27,16 @@ Columns in database
 
 Below are all of the columns in the glitches_v2d0 table which you can perform filters on if you would like
 
-``<TableColumns names=('event_time','ifo','peak_time','peak_time_ns','start_time','start_time_ns','duration',
-'search','process_id','event_id','peak_frequency','central_freq','bandwidth','channel','amplitude',
-'snr','confidence','chisq','chisq_dof','param_one_name','param_one_value','gravityspy_id','Air_Compressor','Blip',
-'Chirp','Extremely_Loud','Helix','Koi_Fish','Light_Modulation','Low_Frequency_Burst',
-'Low_Frequency_Lines','No_Glitch','None_of_the_Above','Paired_Doves','Power_Line','Repeating_Blips',
-'Scattered_Light','Scratchy','Tomte','Violin_Mode','Wandering_Line','Whistle','ml_label','workflow',
-'subjectset','Filename1','Filename2','Filename3','Filename4','upload_flag','1400Ripples',
-'1080Lines','image_status','data_quality','citizen_score','url1','url2','url3','url4','links_subjects','q_value','ml_confidence','vco')>``
+.. code-block:: python
+
+    <TableColumns names=('event_time','ifo','peak_time','peak_time_ns','start_time','start_time_ns','duration',
+    'search','process_id','event_id','peak_frequency','central_freq','bandwidth','channel','amplitude',
+    'snr','confidence','chisq','chisq_dof','param_one_name','param_one_value','gravityspy_id','Air_Compressor','Blip',
+    'Chirp','Extremely_Loud','Helix','Koi_Fish','Light_Modulation','Low_Frequency_Burst',
+    'Low_Frequency_Lines','No_Glitch','None_of_the_Above','Paired_Doves','Power_Line','Repeating_Blips',
+    'Scattered_Light','Scratchy','Tomte','Violin_Mode','Wandering_Line','Whistle','ml_label','workflow',
+    'subjectset','Filename1','Filename2','Filename3','Filename4','upload_flag','1400Ripples',
+    '1080Lines','image_status','data_quality','citizen_score','url1','url2','url3','url4','links_subjects','q_value','ml_confidence','vco')>
 
 Machine Learning model Glitch Classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -75,28 +77,26 @@ publication quality plots easy.
 
 Here we mimic the `histogram <https://gwpy.github.io/docs/latest/examples/table/histogram.html?highlight=hist>`_ functionality
 
-.. plot::
-    :context: reset
-    :include-source:
+.. code-block:: python
 
-    >>> import matplotlib.pyplot as plt
-    >>> plt.switch_backend('agg')
-    >>> from gwpy.table import EventTable
-    >>> blips_O2_L1 = EventTable.fetch('gravityspy', 'glitches', selection = ['ml_label="Blip"', '1200000000 > event_time > 1137250000', 'ml_confidence > 0.95', 'ifo=L1'], host='gravityspyplus.ciera.northwestern.edu')
-    >>> koi_O2_L1 = EventTable.fetch('gravityspy', 'glitches', selection = ['ml_label = "Koi_Fish"', '1200000000 > event_time > 1137250000', 'ml_confidence > 0.95', 'ifo=L1'], host='gravityspyplus.ciera.northwestern.edu')
-    >>> aftercomiss_koi_l1 = koi_O2_L1[koi_O2_L1['event_time']>1178841618]
-    >>> beforecomiss_koi_l1 = koi_O2_L1[koi_O2_L1['event_time']<1178841618]
-    >>> beforecomiss_blips_l1 = blips_O2_L1[blips_O2_L1['event_time']<1178841618]
-    >>> aftercomiss_blips_l1 = blips_O2_L1[blips_O2_L1['event_time']>1178841618]
-    >>> plot = aftercomiss_blips_l1.hist('snr', logbins=True, bins=50, histtype='stepfilled', label='After Commissioning')
-    >>> ax = plot.gca()
-    >>> ax.hist(aftercomiss_koi_l1['snr'], logbins=True, bins=50, histtype='stepfilled', label='After Commissioning Koi')
-    >>> ax.hist(beforecomiss_blips_l1['snr'], logbins=True, bins=50, histtype='stepfilled', label='Before Commissioning')
-    >>> ax.hist(beforecomiss_koi_l1['snr'], logbins=True, bins=50, histtype='stepfilled', label='Before Commissioning Koi')
-    >>> ax.set_xlabel('Signal-to-noise ratio (SNR)')
-    >>> ax.set_ylabel('Rate')
-    >>> ax.set_title('Blips and Kois before and after comissioning L1')
-    >>> ax.autoscale(axis='x', tight=True)
-    >>> ax.set_xlim([0,1000])
-    >>> plot.legend()
+    import matplotlib.pyplot as plt
+    plt.switch_backend('agg')
+    from gwpy.table import EventTable
+    blips_O2_L1 = EventTable.fetch('gravityspy', 'glitches', selection = ['ml_label="Blip"', '1200000000 > event_time > 1137250000', 'ml_confidence > 0.95', 'ifo=L1'], host='gravityspyplus.ciera.northwestern.edu')
+    koi_O2_L1 = EventTable.fetch('gravityspy', 'glitches', selection = ['ml_label = "Koi_Fish"', '1200000000 > event_time > 1137250000', 'ml_confidence > 0.95', 'ifo=L1'], host='gravityspyplus.ciera.northwestern.edu')
+    aftercomiss_koi_l1 = koi_O2_L1[koi_O2_L1['event_time']>1178841618]
+    beforecomiss_koi_l1 = koi_O2_L1[koi_O2_L1['event_time']<1178841618]
+    beforecomiss_blips_l1 = blips_O2_L1[blips_O2_L1['event_time']<1178841618]
+    aftercomiss_blips_l1 = blips_O2_L1[blips_O2_L1['event_time']>1178841618]
+    plot = aftercomiss_blips_l1.hist('snr', logbins=True, bins=50, histtype='stepfilled', label='After Commissioning')
+    ax = plot.gca()
+    ax.hist(aftercomiss_koi_l1['snr'], logbins=True, bins=50, histtype='stepfilled', label='After Commissioning Koi')
+    ax.hist(beforecomiss_blips_l1['snr'], logbins=True, bins=50, histtype='stepfilled', label='Before Commissioning')
+    ax.hist(beforecomiss_koi_l1['snr'], logbins=True, bins=50, histtype='stepfilled', label='Before Commissioning Koi')
+    ax.set_xlabel('Signal-to-noise ratio (SNR)')
+    ax.set_ylabel('Rate')
+    ax.set_title('Blips and Kois before and after comissioning L1')
+    ax.autoscale(axis='x', tight=True)
+    ax.set_xlim([0,1000])
+    plot.legend()
 
