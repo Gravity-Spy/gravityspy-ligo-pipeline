@@ -464,7 +464,7 @@ class Events(GravitySpyTable):
         """
         duration_max = kwargs.pop('duration_max', None)
         duration_min = kwargs.pop('duration_min', None)
-        frequency_max = kwargs.pop('frequency_max', 2048)
+        frequency_max = kwargs.pop('frequency_max', 1024)
         frequency_min = kwargs.pop('frequency_min', 10)
         snr_max = kwargs.pop('snr_max', None)
         snr_min = kwargs.pop('snr_min', 7.5)

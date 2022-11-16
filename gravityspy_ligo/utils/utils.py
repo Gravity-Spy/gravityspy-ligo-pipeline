@@ -212,7 +212,7 @@ def save_q_scans(plot_directory, specsgrams,
         individual_image_filenames.append(ind_fig_filename)
 
     combined_image_filename = os.path.join(plot_directory, id_string + '.png')
-    super_fig.save(combined_image_filename)
+    #super_fig.save(combined_image_filename)
 
     plt.close('all')
 

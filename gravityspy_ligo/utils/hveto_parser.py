@@ -47,5 +47,4 @@ def hveto_parser(infile):
 
     all_channels_in_order = [win_chnl]
     all_channels_in_order.extend(chnl.tolist())
-
     return all_channels_in_order
