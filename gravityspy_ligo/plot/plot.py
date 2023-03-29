@@ -68,6 +68,20 @@ def plot_qtransform(spectrogram, plot_normalized_energy_range, plot_time_ranges,
     mylabelfontsize = 20
     my_color = 'k'
 
+    if detector_name == 'H1':
+        title = "Hanford"
+    elif detector_name == 'L1':
+        title = "Livingston"
+    elif detector_name == 'V1':
+        title = "VIRGO"
+    elif detector_name == 'G1':
+        title = "GEO"
+    elif detector_name == 'K1':
+        title = "KAGRA"
+    else:
+        raise ValueError('You have supplied a detector '
+                         'that is unknown at this time.')
+
     if start_time < 1126400000:
         title = title + ' - pre O1'
     elif 1126400000 < start_time < 1137250000:
@@ -84,10 +98,12 @@ def plot_qtransform(spectrogram, plot_normalized_energy_range, plot_time_ranges,
         title = title + ' - ER13'
     elif 1229176818 < start_time < 1235750418:
         title = title + ' - post ER13 pre O3'
-    elif 1235750418 <start_time < 1238112018:
+    elif 1235750418 < start_time < 1238112018:
         title = title + ' - ER14'
-    elif 1238112018 <start_time:
+    elif 1238112018 < start_time < 1362960018:
         title = title + ' - O3'
+    elif 1362960018 < start_time:
+        title = title + ' - ER15'
     else:
         raise ValueError('Time outside science or engineering run '
                          'or more likely code not updated to reflect '

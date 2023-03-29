@@ -28,6 +28,7 @@ from keras.models import load_model
 
 from ..utils import log
 from ..utils import utils
+from ..api.project import GravitySpyProject
 from ..ml.train_classifier import make_model
 
 import panoptes_client
@@ -131,33 +132,42 @@ class Events(GravitySpyTable):
                                                    inputs)
 
         qvalues = []
+        spectrogram_file_names_dur1 = []
+        spectrogram_file_names_dur2 = []
+        spectrogram_file_names_dur3 = []
+        spectrogram_file_names_dur4 = []
+        all_spectrogram_files = []
+
         # raise exceptions (from multiprocessing, single process raises inline)
-        for f, x in output:
-            if isinstance(x, Exception):
-                x.args = ('Failed to make q scan at time %s: %s' % (f,
-                                                                    str(x)),)
-                raise x
+        for f, qval, spec_file_names, combined_spec_file_name in output:
+            if isinstance(qval, Exception):
+                qval.args = ('Failed to make q scan at time %s: %s' % (f,
+                                                                    str(qval)),)
+                raise qval
             else:
-                qvalues.append(x)
+                qvalues.append(qval)
+                spectrogram_file_names_dur1.append(spec_file_names[0])
+                spectrogram_file_names_dur2.append(spec_file_names[1])
+                spectrogram_file_names_dur3.append(spec_file_names[2])
+                spectrogram_file_names_dur4.append(spec_file_names[3])
 
         self['q_value'] = qvalues
+        all_spectrogram_files.extend(spectrogram_file_names_dur1)
+        all_spectrogram_files.extend(spectrogram_file_names_dur2)
+        all_spectrogram_files.extend(spectrogram_file_names_dur3)
+        all_spectrogram_files.extend(spectrogram_file_names_dur4)
+        self['Filename1'] = spectrogram_file_names_dur1
+        self['Filename2'] = spectrogram_file_names_dur2
+        self['Filename3'] = spectrogram_file_names_dur3
+        self['Filename4'] = spectrogram_file_names_dur4
 
-        results = utils.label_q_scans(plot_directory=plot_directory,
+        results = utils.label_q_scans(filenames_of_images_to_classify=all_spectrogram_files,
                                       path_to_cnn=path_to_cnn,
                                       verbose=verbose,
                                       **kwargs)
 
+        results.remove_columns(['Filename1','Filename2','Filename3','Filename4'])
         results = results.to_pandas()
-        results['Filename1'] = results['Filename1'].apply(lambda x, y : os.path.join(y, x),
-                                                          args=(plot_directory,))
-        results['Filename2'] = results['Filename2'].apply(lambda x, y : os.path.join(y, x),
-                                                          args=(plot_directory,))
-        results['Filename3'] = results['Filename3'].apply(lambda x, y : os.path.join(y, x),
-                                                          args=(plot_directory,))
-        results['Filename4'] = results['Filename4'].apply(lambda x, y : os.path.join(y, x),
-                                                          args=(plot_directory,))
-
-
         results = Events.from_pandas(results.merge(self.to_pandas(),
                                                    on=['gravityspy_id']))
         return results
@@ -194,7 +204,7 @@ class Events(GravitySpyTable):
         tab = self.to_pandas()
         def makelink(x):
             # This horrendous thing obtains the public html path for image
-            intermediate_path = '/'.join(filter(None,str(x.Filename1).split('/'))[3:-1])
+            intermediate_path = '/'.join(list(filter(None,str(x.Filename1).split('/')))[3:-1])
             if x.ifo == 'L1':
                 return 'https://ldas-jobs.ligo-la.caltech.edu/~gravityspy/{0}/{1}.png'.format(intermediate_path,x.gravityspy_id)
             elif x.ifo == 'V1':
@@ -386,6 +396,39 @@ class Events(GravitySpyTable):
 
         return Events(results)
 
+    def determine_workflow_and_subjectset(self, project_info_pickle):
+        """Obtain omicron triggers to run gravityspy on
+        Parameters:
+            path_to_cnn (str): filename of file with Gravity Spy project info
+        Returns:
+            `Events` table with columns workflow and subjectset
+        """
+        if 'ml_confidence' not in self.keys() or 'ml_label' not in self.keys():
+            raise ValueError("This method only works if the confidence and label "
+                             "of the image in known.")
+        gspyproject = GravitySpyProject.load_project_from_cache(
+                                                                project_info_pickle
+                                                                )
+
+        workflows_for_each_class = gspyproject.get_level_structure(IDfilter='O2')
+        # Determine subject set and workflow this should go to.
+        level_of_images = []
+        subjectset_of_images = []
+        for label, confidence in zip(self['ml_label'], self['ml_confidence']):
+            for iworkflow in ['1610', '1934', '1935', '7765', '7766', '7767']:
+                if label in workflows_for_each_class[iworkflow].keys():
+                     if workflows_for_each_class[iworkflow][label][2][1] <= \
+                            confidence <= \
+                                 workflows_for_each_class[iworkflow][label][2][0]:
+                         level_of_images.append(int(workflows_for_each_class[iworkflow][label][0]))
+                         subjectset_of_images.append(workflows_for_each_class[iworkflow][label][1])
+                         break
+
+        self["workflow"] = level_of_images
+        self["subjectset"] = subjectset_of_images
+
+        return self
+
     def create_collection(self, name=None, private=True,
                           default_subject=None):
         """Obtain omicron triggers to run gravityspy on
@@ -464,7 +507,7 @@ class Events(GravitySpyTable):
         """
         duration_max = kwargs.pop('duration_max', None)
         duration_min = kwargs.pop('duration_min', None)
-        frequency_max = kwargs.pop('frequency_max', 1024)
+        frequency_max = kwargs.pop('frequency_max', 2048)
         frequency_min = kwargs.pop('frequency_min', 10)
         snr_max = kwargs.pop('snr_max', None)
         snr_min = kwargs.pop('snr_min', 7.5)
@@ -697,7 +740,7 @@ def id_generator(x, size=10,
     return ''.join(random.SystemRandom().choice(chars) for _ in range(size))
 
 def get_connection_str(db='gravityspy',
-                       host='gravityspy.ciera.northwestern.edu',
+                       host='gravityspyplus.ciera.northwestern.edu',
                        port='5432',
                        server='postgresql',
                        user=None,
@@ -753,11 +796,11 @@ def _make_single_qscan(inputs):
                                                      channel_name=channel_name,
                                                      frametype=frametype,
                                                      verbose=verbose)
-        utils.save_q_scans(plot_directory, specsgrams,
+        individual_image_filenames, combined_image_filename = utils.save_q_scans(plot_directory, specsgrams,
                            plot_normalized_energy_range, plot_time_ranges,
                            ifo, event_time, id_string=gid, verbose=verbose)
 
-        return event_time, q_value
+        return event_time, q_value, individual_image_filenames, combined_image_filename
     except Exception as exc:  # pylint: disable=broad-except
         if nproc == 1:
             raise

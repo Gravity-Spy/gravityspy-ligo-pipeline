@@ -24,6 +24,8 @@ from ..ml import labelling_test_glitches as label_glitches
 from gwpy.timeseries import TimeSeries
 from gwpy.segments import Segment
 from gwpy.table import GravitySpyTable
+from gwpy import time
+
 
 import numpy
 import h5py
@@ -144,19 +146,6 @@ def make_q_scans(event_time, **kwargs):
                               tres=0.002,
                               fres=0.5, outseg=outseg, whiten=True)
 
-    if 'GDS-CALIB_STRAIN' in channel_name:
-        # check if this is the main channel, if it is we will get the q_gram in order to create a box around the glitch feature
-        search = Segment(center_time-0.25, center_time+0.25)
-        q_gram = data.q_gram(qrange=tuple(search_q_range),
-                             frange=tuple(search_frequency_range),
-                             snrthresh=7.0,
-                             search=search)
-
-        setattr(q_scan, 'box_x', q_gram['time'].min())
-        setattr(q_scan, 'box_y', q_gram['frequency'].min())
-        setattr(q_scan, 'box_x_dur', q_gram['duration'].sum())
-        setattr(q_scan, 'box_y_dur', q_gram['frequency'].max() - q_gram['frequency'].min() + q_gram['bandwidth'].max())
-
     q_value = q_scan.q
     
     if verbose:
@@ -176,6 +165,7 @@ def save_q_scans(plot_directory, specsgrams,
     -------
     """
     individual_image_filenames = []
+    plot_directory = os.path.join(plot_directory, time.from_gps(event_time).strftime('%Y-%m-%d'), str(event_time))
     id_string = kwargs.pop('id_string', '{0:.9f}'.format(event_time))
     verbose = kwargs.pop('verbose', False)
     ###########################################################################
@@ -212,13 +202,13 @@ def save_q_scans(plot_directory, specsgrams,
         individual_image_filenames.append(ind_fig_filename)
 
     combined_image_filename = os.path.join(plot_directory, id_string + '.png')
-    #super_fig.save(combined_image_filename)
+    super_fig.save(combined_image_filename)
 
     plt.close('all')
 
     return individual_image_filenames, combined_image_filename
 
-def label_q_scans(plot_directory, path_to_cnn, **kwargs):
+def label_q_scans(filenames_of_images_to_classify, path_to_cnn, **kwargs):
     """Classify triggers in this table
 
     Parameters:
@@ -236,25 +226,19 @@ def label_q_scans(plot_directory, path_to_cnn, **kwargs):
     classes = kwargs.pop('classes',
                          numpy.array(f['/labels/labels']).astype(str).T[0])
 
+    print(classes)
     if verbose:
         logger = log.Logger('Gravity Spy: Labelling Images')
-    # Since we created the images in a
-    # special temporary directory we can run os.listdir to get there full
-    # names so we can convert the images into ML readable format.
-    list_of_images = [ifile for ifile in os.listdir(plot_directory)
-                      if 'spectrogram' in ifile]
-
-    if verbose:
         logger.info('Converting image to ML readable...')
 
     image_data_for_cnn = pandas.DataFrame()
-    for image in list_of_images:
+    for image in filenames_of_images_to_classify:
         if verbose:
             logger.info('Converting {0}'.format(image))
 
-        image_data = read_image.read_grayscale(os.path.join(plot_directory, image),
+        image_data = read_image.read_grayscale(image,
                                                resolution=0.3)
-        image_data_for_cnn[image] = [image_data]
+        image_data_for_cnn[image.split('/')[-1]] = [image_data]
 
     # Now label the image
     if verbose:
@@ -398,7 +382,7 @@ def get_features_select_images(filename1, filename2, filename3, filename4,
 
     return scores_table
 
-def get_features(plot_directory, path_to_semantic_model, **kwargs):
+def get_features(filenames_of_images_to_classify, path_to_semantic_model, **kwargs):
     """Classify triggers in this table
 
     Parameters:
@@ -412,23 +396,16 @@ def get_features(plot_directory, path_to_semantic_model, **kwargs):
 
     if verbose:
         logger = log.Logger('Gravity Spy: Extracting Feature Space')
-    # Since we created the images in a
-    # special temporary directory we can run os.listdir to get there full
-    # names so we can convert the images into ML readable format.
-    list_of_images = [ifile for ifile in os.listdir(plot_directory)
-                      if 'spectrogram' in ifile]
-
-    if verbose:
         logger.info('Converting image to RGB readable...')
 
     image_data_for_si = pandas.DataFrame()
-    for image in list_of_images:
+    for image in filenames_of_images_to_classify:
         if verbose:
             logger.info('Converting {0}'.format(image))
 
-        image_data_r, image_data_g, image_data_b = read_image.read_rgb(os.path.join(plot_directory, image),
+        image_data_r, image_data_g, image_data_b = read_image.read_rgb(image,
                                                                        resolution=0.3)
-        image_data_for_si[image] = [[image_data_r, image_data_g, image_data_b]]
+        image_data_for_si[image.split('/')[-1]] = [[image_data_r, image_data_g, image_data_b]]
 
     # Now label the image
     if verbose:
