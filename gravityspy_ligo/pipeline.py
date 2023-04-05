@@ -7,10 +7,19 @@ from gwpy.time import tconvert
 import argparse
 import os
 import sys
+import socket
 import pandas
 
-#engine1 = create_engine('postgresql://{0}:{1}@gravityspyplus.ciera.northwestern.edu:5432/gravityspy'.format(os.environ['GRAVITYSPY_DATABASE_USER'],os.environ['GRAVITYSPY_DATABASE_PASSWD']))
-#DEFAULT_START_TIME = pandas.read_sql('SELECT max(event_time) FROM glitches_v2d0 WHERE ifo = \'L1\'', engine1).values[0][0]
+engine1 = create_engine('postgresql://{0}:{1}@gravityspyplus.ciera.northwestern.edu:5432/gravityspy'.format(os.environ['GRAVITYSPY_DATABASE_USER'],os.environ['GRAVITYSPY_DATABASE_PASSWD']))
+### Add logic to auto determine if we are running on LLO or LHO.
+hostname = socket.gethostname()
+if "ligo-la" in hostname:
+    DEFAULT_IFO = "L1"
+else:
+    DEFAULT_IFO = "H1"
+
+print("Running Gravity Spy pipleine on {0}".format(DEFAULT_IFO))
+#DEFAULT_START_TIME = pandas.read_sql('SELECT max(event_time) FROM glitches_v2d0 WHERE ifo = \'{0}\''.format(DEFAULT_IFO), engine1).values[0][0]
 DEFAULT_START_TIME = 1362960018.0
 DEFAULT_STOP_TIME = tconvert('now')
 
@@ -39,7 +48,7 @@ def parse_commandline():
     parser.add_argument("--frame-type", help="What frame to check for "
                         "omicron triggers in", required=True)
     parser.add_argument("--plot-directory", help="Outdir for images",
-                        default='/home/gravityspy/public_html/O3/ER13/')
+                        default='/home/gravityspy/public_html/runs/O4/')
     parser.add_argument("--dqflag", help="What segment to check for "
                         "omicron triggers in",
                         default='DMT-ANALYSIS_READY:1')
@@ -108,11 +117,3 @@ def main():
     engine = create_engine('mysql://{0}:{1}@ldvw.ligo.caltech.edu:3306/gravityspy'.format(SQL_USER,SQL_PASS))
     if args.upload:
         trigs_results.to_glitch_db(table='GSMetadata', engine=engine)
-
-    # convert unicode to bytestring for saving to local HDF5 file
-    #trigs_results.convert_unicode_to_bytestring()
-    #features.convert_unicode_to_bytestring()
-    #trigs_results.write(os.path.join(args.plot_directory, 'O3_ml_scores.hdf5'),
-    #                    path='/O3/{0}'.format(args.start_time), format='hdf5', append=True,)
-    #features.write(os.path.join(args.plot_directory, 'O3_features.hdf5'),
-    #               path='/O3/{0}'.format(args.start_time), format='hdf5', append=True,)
