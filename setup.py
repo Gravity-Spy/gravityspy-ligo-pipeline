@@ -97,9 +97,6 @@ extras_require = {
 
 packagenames = find_packages()
 
-# Executables go in a folder called bin
-scripts = glob.glob(os.path.join('bin', '*'))
-
 PACKAGENAME = 'gravityspy_ligo'
 DISTNAME = 'gravityspy-ligo' #'YOUR DISTRIBTUION NAME (I.E. PIP INSTALL DISTNAME)' Generally good to be same as packagename
 AUTHOR = 'Scott Coughlin'
@@ -120,9 +117,13 @@ setup(name=DISTNAME,
       license=LICENSE,
       packages=packagenames,
       include_package_data=True,
+      entry_points={
+          "console_scripts": [
+              "gravityspy-ligo-pipeline = gravityspy_ligo.pipeline:main",
+          ],
+      },
       cmdclass=cmdclass,
       url=GITHUBURL,
-      scripts=scripts,
       setup_requires=setup_requires,
       install_requires=install_requires,
       tests_require=tests_require,
