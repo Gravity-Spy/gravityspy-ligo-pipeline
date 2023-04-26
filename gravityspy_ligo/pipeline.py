@@ -20,7 +20,7 @@ else:
 
 print("Running Gravity Spy pipleine on {0}".format(DEFAULT_IFO))
 #DEFAULT_START_TIME = pandas.read_sql('SELECT max(event_time) FROM glitches_v2d0 WHERE ifo = \'{0}\''.format(DEFAULT_IFO), engine1).values[0][0]
-DEFAULT_START_TIME = 1362960018.0
+DEFAULT_START_TIME = 1366545618.0
 DEFAULT_STOP_TIME = tconvert('now')
 
 def parse_commandline():

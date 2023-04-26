@@ -55,6 +55,7 @@ class Events(GravitySpyTable):
             `Events` table
         """
         etg = kwargs.pop('etg', 'OMICRON')
+        model_name = kwargs.pop('model_name', 'O4_v1')
         tab = super(Events, cls).read(*args, **kwargs)
         tab = tab.to_pandas()
         if etg != 'hveto':
@@ -65,6 +66,7 @@ class Events(GravitySpyTable):
                 tab['upload_flag'] = 0
                 tab['citizen_score'] = 0.0
                 tab['links_subjects'] = 0
+                tab['model_name'] = model_name
                 tab['url1'] = '' 
                 tab['url2'] = '' 
                 tab['url3'] = ''
