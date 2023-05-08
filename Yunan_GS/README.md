@@ -1,6 +1,7 @@
 # GravitySpy New Classification Model
 
 You can test the model by running [test_classify.py](https://github.com/Gravity-Spy/gravityspy-ligo-pipeline/blob/Yunan/Yunan_GS/test_classify.py).
+The new model weights is [O4_attention-classifier.hdf5](https://github.com/Gravity-Spy/gravityspy-ligo-pipeline/tree/Yunan/Yunan_GS/models)
 
 Changes: 
 1. [classify.py](https://github.com/Gravity-Spy/gravityspy-ligo-pipeline/blob/Yunan/Yunan_GS/gravityspy/classify/classify.py): line 93, 
