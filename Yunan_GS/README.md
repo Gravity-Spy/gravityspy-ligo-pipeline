@@ -1,25 +1,10 @@
-# GravitySpy
-This repo contains code for the GravitySpy Citizen Science project.
+# GravitySpy New Classification Model
 
-The gravityspy project contains three components. The code to produce the images of the glitches that users will evalutate. The code that will evaluate user performance and image retireability colloquially known as the Crowd Sourcing code. Fianlly, the code that determines the Machine Learning labelling of an image, speifically a set of values indicating the classifiers confidence that it belongs in a given category.
+You can test the model by running [test_classify.py](\https://github.com/Gravity-Spy/gravityspy-ligo-pipeline/blob/Yunan/Yunan_GS/test_classify.py).
 
-# Docs
-
-<https://gravity-spy.github.io/>
-
-# Installation
-
-The easiest method to install cosmic is using pip directly:
-
+Changes: 
+1. [classify.py](https://github.com/Gravity-Spy/gravityspy-ligo-pipeline/blob/Yunan/Yunan_GS/gravityspy/classify/classify.py): line 93, 
 ```
-conda install -c gravityspy gravityspy
+utils.label_q_scans_new
 ```
 
-# Installation on LDG Clusters
-```
-source /cvmfs/oasis.opensciencegrid.org/ligo/sw/conda/etc/profile.d/conda.sh
-conda activate /home/gravityspy/.conda/envs/gravityspy-gpu-py37/
-```
-
-[![Build Status](https://travis-ci.com/Gravity-Spy/GravitySpy.svg?branch=develop)](https://travis-ci.com/Gravity-Spy/GravitySpy)
-[![Coverage Status](https://coveralls.io/repos/github/Gravity-Spy/GravitySpy/badge.svg?branch=develop)](https://coveralls.io/github/Gravity-Spy/GravitySpy?branch=develop)
