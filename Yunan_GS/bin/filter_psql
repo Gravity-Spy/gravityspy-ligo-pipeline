@@ -1,0 +1,110 @@
+#!/usr/bin/env python
+
+# Copyright (C) 2013 Michael Coughlin
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+import os, sys
+import numpy as np
+import optparse
+from sqlalchemy.engine import create_engine
+import pandas as pd
+import glue.segments
+
+__author__ = "Michael Coughlin <michael.coughlin@ligo.org>"
+__version__ = 1.0
+__date__    = "9/22/2013"
+
+# =============================================================================
+#
+#                               DEFINITIONS
+#
+# =============================================================================
+
+def parse_commandline():
+    """@parse the options given on the command-line.
+    """
+    parser = optparse.OptionParser(usage=__doc__,version=__version__)
+
+    parser.add_option("-d", "--detector", help="Detector.",default ="H1")
+    parser.add_option("-b", "--database", help="Database (O1GlitchClassification,classification,glitches).", default="O1GlitchClassification")
+    parser.add_option("-l", "--label", help="Label.",default = None)
+    parser.add_option("-o", "--outfile", help="Output file.",default ="test.csv")
+    parser.add_option("-f", "--segfile", help="segment file.",default ="test.dat")
+    parser.add_option("-p", "--padding", help="segment file padding.",type=int,default=1)
+    parser.add_option("-s", "--gpsStart", help="Start GPS Time.",type=int,default=1126400000)
+    parser.add_option("-e", "--gpsEnd", help="End GPS Time.",type=int,default=1126900000)
+    parser.add_option("--fmin", help="Start Frequency.",type=float,default=0.0)
+    parser.add_option("--fmax", help="End Frequency.",type=float,default=16384.0)
+    parser.add_option("-v", "--verbose", action="store_true", default=False,
+                      help="Run verbosely. (Default: False)")
+
+    opts, args = parser.parse_args()
+
+    # show parameters
+    if opts.verbose:
+        print >> sys.stderr, ""
+        print >> sys.stderr, "running network_eqmon..."
+        print >> sys.stderr, "version: %s"%__version__
+        print >> sys.stderr, ""
+        print >> sys.stderr, "***************** PARAMETERS ********************"
+        for o in opts.__dict__.items():
+          print >> sys.stderr, o[0]+":"
+          print >> sys.stderr, o[1]
+        print >> sys.stderr, ""
+
+    return opts
+
+# Parse command line
+opts = parse_commandline()
+
+detector = opts.detector
+database = opts.database
+label = opts.label
+outfile = opts.outfile
+segfile = opts.segfile
+padding = opts.padding
+gpsStart = opts.gpsStart
+gpsEnd = opts.gpsEnd
+fmin = opts.fmin
+fmax = opts.fmax
+
+engine = create_engine('postgresql://{0}:{1}@gravityspy.ciera.northwestern.edu:5432/gravityspy'.format(os.environ['GRAVITYSPY_DATABASE_USER'],os.environ['GRAVITYSPY_DATABASE_PASSWD']))
+tmp = pd.read_sql(database,engine)
+tmp = tmp.loc[tmp.ifo == detector]
+if not label == None:
+    tmp = tmp.loc[tmp.Label == label]
+tmp = tmp.loc[tmp.peakGPS >= gpsStart]
+tmp = tmp.loc[tmp.peakGPS <= gpsEnd]
+tmp = tmp.loc[tmp.peak_frequency >= fmin]
+tmp = tmp.loc[tmp.peak_frequency <= fmax]
+columns=["peakGPS","peak_frequency", "snr"]
+tmp.to_csv(outfile,columns=columns,index=False,header=True)
+
+segmentlist = glue.segments.segmentlist()
+for index, row in tmp.iterrows():
+    gps_floor = np.floor(row["peakGPS"]-padding)
+    gps_ceil = np.ceil(row["peakGPS"]+padding)
+    segmentlist.append(glue.segments.segment(gps_floor,gps_ceil))
+segmentlist.coalesce()
+
+fid = open(segfile,"w")
+for segment in segmentlist:
+    fid.write("%d %d\n"%(segment[0],segment[1]))
+fid.close()
+
+print "GPS: %.0f - %.0f"%(tmp["peakGPS"].min(),tmp["peakGPS"].max())
+print "Frequency: %.5f - %.5f"%(tmp["peak_frequency"].min(),tmp["peak_frequency"].max())
+

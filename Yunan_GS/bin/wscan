@@ -1,0 +1,170 @@
+#!/usr/bin/env python
+
+# ---- Import standard modules to the python path.
+
+from __future__ import division
+
+from gravityspy import __version__
+from gravityspy.classify import classify
+from gravityspy.utils import log
+from gravityspy.utils import utils
+from gravityspy.table import Events
+
+import argparse
+import os
+import shutil
+
+###############################################################################
+##########################                             ########################
+##########################   Func: parse_commandline   ########################
+##########################                             ########################
+###############################################################################
+# Definite Command line arguments here
+
+def parse_commandline():
+    """Parse the arguments given on the command-line.
+    """
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('-V', '--version', action='version',
+                        version=__version__)
+    parser.add_argument("--channel-name",
+                        help="What channel to find the data in", required=True)
+    parser.add_argument("--event-time", type=float,
+                        help="Trigger time of the glitch", required=True)
+    parser.add_argument("--gravityspy-id", action="store_true", default=False,
+                        help="Is this image being generated for "
+                        "the GravitySpy project, if so you must assign a "
+                        "gravityspy_id string to label the images instead of "
+                        "GPS time")
+    parser.add_argument("--id",
+                        help="The gravityspy_id string to be supplied with "
+                             "--gravityspy_id")
+    parser.add_argument("--frametype",
+                        help="Frame type to find data for", default=None)
+    parser.add_argument("--plot-directory", help="Outdir for images")
+    parser.add_argument("--path-to-cnn-model",
+                        help="Path to name of cnn model",
+                        required=True)
+    parser.add_argument("--path-to-semantic-file",
+                        help="Path to name of similarity model",
+                        default=None)
+    parser.add_argument("--project-info-pickle",
+                        help="This pickle file holds information"
+                        "about what workflows a image with what"
+                        "confidence label should go into",
+                        default=None)
+    parser.add_argument("--hdf5", action="store_true", default=False,
+                        help="Store triggers in local hdf5 table format")
+    parser.add_argument("--sql", action="store_true", default=False,
+                        help="Store triggers in a remote sql DB")
+    parser.add_argument("--delete-images", action="store_true", default=False,
+                        help="Delete Images After Classifying Them")
+    parser.add_argument("--verbose", action="store_true", default=False,
+                        help="Run in Verbose Mode")
+    args = parser.parse_args()
+
+
+    return args
+
+###############################################################################
+##########################                     ################################
+##########################      MAIN CODE      ################################
+##########################                     ################################
+###############################################################################
+
+def main(channel_name, frametype, event_time, gid, plot_directory,
+         path_to_cnn, project_info_pickle=None, path_to_similarity_search=None,
+         gravityspy_id=True, hdf5=False, sql=False, verbose=False,
+         delete_images=False):
+
+    if not os.path.isfile(path_to_cnn):
+        raise ValueError('The provided CNN model does not '
+                         'exist.')
+
+    if ((path_to_similarity_search is not None) and
+        (not os.path.isfile(path_to_similarity_search))):
+        raise ValueError('The provided similarity model does not '
+                         'exist.')
+
+    logger = log.Logger('Gravity Spy: OmegaScan')
+
+    # ---- Create configuration-file-parser object and read parameters file.
+    ########################################################################
+    #     Determine if this is a normal omega scan or a Gravityspy         #
+    #    omega scan with unique id. If Gravity spy then additional         #
+    #    files and what not must be generated                              #
+    ########################################################################
+
+    if gravityspy_id:
+        idstring = gid
+    else:
+        idstring = "{0:.2f}".format(event_time)
+
+    ###########################################################################
+    #                           create output directory                       #
+    ###########################################################################
+
+    # if outputDirectory not specified, make one based on center time
+    if plot_directory is None:
+        plot_directorytmp = './scans'
+    else:
+        plot_directorytmp = os.path.join(plot_directory, idstring, idstring)
+
+    plot_directorytmp += '/'
+
+    # report status
+    if not os.path.isdir(plot_directorytmp):
+        if verbose:
+            logger.info('creating event directory')
+        os.makedirs(plot_directorytmp)
+    if verbose:
+        logger.info('outputDirectory:  {0}'.format(plot_directorytmp))
+
+    ###########################################################################
+    #               Process Channel Data                                      #
+    ###########################################################################
+    results = classify(event_time=event_time, channel_name=channel_name,
+                       path_to_cnn=path_to_cnn,
+                       id_string=idstring,
+                       frametype=frametype, plot_directory=plot_directorytmp)
+
+    if project_info_pickle is not None:
+        results.determine_workflow_and_subjectset(project_info_pickle)
+
+    if path_to_similarity_search is not None:
+        features = utils.get_features(plot_directory=plot_directorytmp,
+                                      path_to_semantic_model=path_to_similarity_search)
+
+    # Create directory called "Classified" were images that were successfully classified go.
+    final_path = os.path.join(plot_directory, 'Classified')
+
+    if not os.path.isdir(final_path):
+        os.makedirs(final_path)
+
+    if sql:
+        if path_to_similarity_search is not None:
+            features.to_sql(table='updated_similarity_index')
+        results.to_sql()
+    elif hdf5:
+        results.convert_unicode_to_bytestring()
+        results.write(os.path.join(final_path, 'classification.hdf5'),
+                      path='/{0}'.format(idstring), format='hdf5', append=True)
+        if path_to_similarity_search is not None:
+            features.convert_unicode_to_bytestring()
+            features.write(os.path.join(final_path, 'features.hdf5'),
+                       path='/{0}'.format(idstring), format='hdf5', append=True)
+
+    if delete_images:
+        shutil.rmtree(os.path.join(plot_directory, idstring))
+    else:
+        system_call = "mv {0}*.png {1}".format(plot_directorytmp, final_path)
+        os.system(system_call)
+        shutil.rmtree(os.path.join(plot_directory, idstring))
+
+if __name__ == '__main__':
+    args = parse_commandline()
+    main(args.channel_name, args.frametype,
+         args.event_time, args.id, args.plot_directory, args.path_to_cnn_model,
+         args.project_info_pickle, args.path_to_semantic_file,
+         args.gravityspy_id, args.hdf5, args.sql, args.verbose,
+         args.delete_images)
