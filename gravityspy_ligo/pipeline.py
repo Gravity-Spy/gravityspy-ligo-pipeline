@@ -118,7 +118,4 @@ def main():
     SQL_PASS = os.environ['SQL_PASS']
     engine = create_engine('mysql://{0}:{1}@127.0.0.1:33060/gravityspy'.format(SQL_USER,SQL_PASS))
     if args.upload:
-        if "ligo-la" in hostname:
-            DEFAULT_IFO = "L1"
-        else:
-            trigs_results.to_glitch_db(table='GSMetadata', engine=engine)
+        trigs_results.to_glitch_db(table='GSMetadata', engine=engine)
