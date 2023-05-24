@@ -1,5 +1,6 @@
 import tensorflow as tf
 from .GS_utils import concatenate_views
+from .GS_utils import GS_new
 from keras.models import load_model
 from PIL import Image
 from keras.applications.vgg16 import preprocess_input
@@ -40,7 +41,7 @@ def main(image_data, model_adr, image_size=[140, 170], verbose=False):
     return dw[0], numpy.argmax(dwslice)
 
 
-def label_glitches(image_data, model_name,
+def label_glitches(image_data, model_name, model_type,
                    order_of_channels="channels_last",
                    image_order=['0.5.png', '1.0.png', '2.0.png', '4.0.png'],
                    image_size=[140, 170],
@@ -55,8 +56,11 @@ def label_glitches(image_data, model_name,
             the b/w pixel values at some resoltion
             determined by `read_image`
 
-        model_adr (str, optional):
-            Path to folder containing model
+        model_name (str):
+            Full path to the model
+
+        model_type (str):
+            Can be either 'yunan' or 'original'
 
         image_size (list, optional):
             Default [140, 170]
@@ -75,15 +79,30 @@ def label_glitches(image_data, model_name,
 
     img_rows, img_cols = image_size[0], image_size[1]
 
-    # load a model and weights
-    if order_of_channels == 'channels_last':
-        reshape_order = (-1, img_rows, img_cols, 1)
-    elif order_of_channels == 'channels_first':
-        reshape_order = (-1, 1, img_rows, img_cols)
-    else:
-        raise ValueError("Do not understand supplied channel order")
 
-    final_model = load_model(model_name)
+    if model_type == "yunan":
+        # load a model and weights
+        if order_of_channels == 'channels_last':
+            reshape_order = (-1, img_rows, img_cols, 3)
+        elif order_of_channels == 'channels_first':
+            reshape_order = (-1, 3, img_rows, img_cols)
+        else:
+            raise ValueError("Do not understand supplied channel order")
+
+        final_model = GS_new(23, img_rows, img_cols, 3)
+        final_model.load_weights(model_name)
+
+    elif model_type == "original":
+        # load a model and weights
+        if order_of_channels == 'channels_last':
+            reshape_order = (-1, img_rows, img_cols, 1)
+        elif order_of_channels == 'channels_first':
+            reshape_order = (-1, 1, img_rows, img_cols)
+        else:
+            raise ValueError("Do not understand supplied channel order")
+        final_model = load_model(model_name)
+    else:
+        raise ValueError("Invalid model_type supplied, must be on of `yunan` or `original`.")
 
     final_model.compile(loss='categorical_crossentropy',
                         optimizer='adadelta',
@@ -100,8 +119,22 @@ def label_glitches(image_data, model_name,
     test_set_unlabelled_x_3 = numpy.vstack(image_data[third_image_in_panel].iloc[0]).reshape(reshape_order)
     test_set_unlabelled_x_4 = numpy.vstack(image_data[fourth_image_in_panel].iloc[0]).reshape(reshape_order)
 
-    concat_test_unlabelled = concatenate_views(test_set_unlabelled_x_1,
-                            test_set_unlabelled_x_2, test_set_unlabelled_x_3, test_set_unlabelled_x_4, [img_rows, img_cols], False, order_of_channels)
+    if model_type == "original":
+        concat_test_unlabelled = concatenate_views(test_set_unlabelled_x_1,
+                                                   test_set_unlabelled_x_2,
+                                                   test_set_unlabelled_x_3,
+                                                   test_set_unlabelled_x_4,
+                                                   [img_rows, img_cols],
+                                                   False,
+                                                   order_of_channels)
+    elif model_type == "yunan":
+        concat_test_unlabelled = {
+                "0.5": test_set_unlabelled_x_1,
+                "1.0": test_set_unlabelled_x_2,
+                "2.0": test_set_unlabelled_x_3,
+                "4.0": test_set_unlabelled_x_4,
+                }
+
 
     confidence_array = final_model.predict(concat_test_unlabelled, verbose=0)
     index_label = confidence_array.argmax(1)

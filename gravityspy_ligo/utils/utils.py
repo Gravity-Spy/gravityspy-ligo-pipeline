@@ -220,25 +220,46 @@ def label_q_scans(filenames_of_images_to_classify, path_to_cnn, **kwargs):
     verbose = kwargs.pop('verbose', False)
     order_of_channels = kwargs.pop('order_of_channels', 'channels_last')
     image_order = kwargs.pop('image_order', ['0.5.png', '1.0.png', '2.0.png', '4.0.png'])
+    model_type = kwargs.pop('model_type', 'yunan')
+    if model_type not in ["yunan", "original"]:
+        raise ValueError("model type must be of type `yunan` of `original`")
 
-    f = h5py.File(path_to_cnn, 'r')
-    # load the api gravityspy project cached class
-    classes = kwargs.pop('classes',
-                         numpy.array(f['/labels/labels']).astype(str).T[0])
+    if model_type == "original":
+        f = h5py.File(path_to_cnn, 'r')
+        # load the api gravityspy project cached class
+        classes = kwargs.pop('classes',
+                             numpy.array(f['/labels/labels']).astype(str).T[0])
+    elif model_type == "yunan":
+        classes = ['1080Lines', '1400Ripples', 'Air_Compressor',
+                   'Blip', 'Blip_Low_Frequency', 'Chirp', 'Extremely_Loud', 
+                   'Fast_Scattering', 'Helix', 'Koi_Fish', 'Light_Modulation',
+                   'Low_Frequency_Burst', 'Low_Frequency_Lines', 'No_Glitch',
+                   'Paired_Doves', 'Power_Line', 'Repeating_Blips', 'Scattered_Light',
+                   'Scratchy', 'Tomte', 'Violin_Mode', 'Wandering_Line', 'Whistle']
 
-    print(classes)
     if verbose:
         logger = log.Logger('Gravity Spy: Labelling Images')
         logger.info('Converting image to ML readable...')
 
-    image_data_for_cnn = pandas.DataFrame()
-    for image in filenames_of_images_to_classify:
-        if verbose:
-            logger.info('Converting {0}'.format(image))
+    if model_type == "original":
+        image_size = [140, 170]
+        image_data_for_cnn = pandas.DataFrame()
+        for image in filenames_of_images_to_classify:
+            if verbose:
+                logger.info('Converting {0}'.format(image))
 
-        image_data = read_image.read_grayscale(image,
-                                               resolution=0.3)
-        image_data_for_cnn[image.split('/')[-1]] = [image_data]
+            image_data = read_image.read_grayscale(image,
+                                                   resolution=0.3)
+            image_data_for_cnn[image.split('/')[-1]] = [image_data]
+    elif model_type == "yunan":
+        image_size = [448, 448]
+        image_data_for_cnn = pandas.DataFrame()
+        for image in filenames_of_images_to_classify:
+            if verbose:
+                logger.info('Converting {0}'.format(image))
+
+            image_data = read_image.read_data_yunan_model(image)
+            image_data_for_cnn[image.split('/')[-1]] = [image_data]
 
     # Now label the image
     if verbose:
@@ -247,7 +268,8 @@ def label_q_scans(filenames_of_images_to_classify, path_to_cnn, **kwargs):
     scores, ml_label, ids, filename1, filename2, filename3, filename4 = \
          label_glitches.label_glitches(image_data=image_data_for_cnn,
                                        model_name='{0}'.format(path_to_cnn),
-                                       image_size=[140, 170],
+                                       model_type=model_type,
+                                       image_size=image_size,
                                        order_of_channels=order_of_channels,
                                        image_order=image_order,
                                        verbose=verbose)

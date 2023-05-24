@@ -4,6 +4,7 @@ from skimage.transform import rescale
 import numpy as np
 import os
 from functools import reduce
+import tensorflow as tf
 
 
 def read_and_crop_image(filename, x, y):
@@ -92,3 +93,37 @@ def read_rgb(filename, resolution=0.3, x=[66, 532], y=[105, 671],
     image_data_b = np.reshape(image_data[:,:,2], (dim))
 
     return image_data_r, image_data_g, image_data_b
+
+def read_data_yunan_model(filename, img_rows = 448, img_cols = 448,
+                   verbose=False):
+    """Convert image from RGB to Gray, downsample
+
+    Parameters
+        filename (str):
+            the file you would like to pixelize
+
+        resolution (float, optional):
+            default: 0.3
+
+        verbose (bool, optional):
+            default: False
+
+    Returns
+        image_data (`np.array):
+            this images is taken from rgb to gray scale
+            and then downsampled by the resolution.
+    """
+    image_data =  tf.keras.utils.load_img(
+        filename,
+        color_mode='rgb')
+    
+    image_data = tf.image.crop_to_bounding_box(image_data, 60, 100, 480, 575)
+    image_data = tf.image.resize(image_data, [img_rows, img_cols])
+
+    dim = int(reduce(lambda x, y: x * y, image_data.shape))
+
+    image_data = np.reshape(image_data, (dim))
+
+    image_data = np.array(image_data, dtype='f')
+
+    return image_data

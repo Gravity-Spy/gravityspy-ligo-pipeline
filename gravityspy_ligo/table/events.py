@@ -326,20 +326,22 @@ class Events(GravitySpyTable):
 
             tab1 = tab[tab['subjectset'] == subset_id]
 
-            for fn1, fn2, fn3, fn4, gid, qval in tab1['Filename1', 'Filename2', 'Filename3', 'Filename4', 'gravityspy_id', 'q_value']:
+            for fn1, fn2, fn3, fn4, gid, qval, ml_top_label, ml_top_confidence, event_time in tab1['Filename1', 'Filename2', 'Filename3', 'Filename4', 'gravityspy_id', 'q_value', 'ml_label', 'ml_confidence', 'event_time']:
                 subject = panoptes_client.Subject()
                 subject.links.project = project
                 subject.add_location(str(fn1))
                 subject.add_location(str(fn2))
                 subject.add_location(str(fn3))
                 subject.add_location(str(fn4))
-                subject.metadata['date'] = '20180825'
+                subject.metadata['date'] = from_gps(event_time).strftime("%Y%m%d")
                 subject.metadata['subject_id'] = str(gid)
                 subject.metadata['Filename1'] = fn1.split('/')[-1]
                 subject.metadata['Filename2'] = fn2.split('/')[-1]
                 subject.metadata['Filename3'] = fn3.split('/')[-1]
                 subject.metadata['Filename4'] = fn4.split('/')[-1]
                 subject.metadata['q_value'] = str(qval)
+                subject.metadata['#ml_top_confidence'] = str(ml_top_confidence)
+                subject.metadata['#ml_top_label'] = str(ml_top_label)
                 subject.save()
                 subjects.append(subject)
                 self['links_subjects'][self['gravityspy_id'] == gid] = int(subject.id)

@@ -21,7 +21,7 @@ else:
 print("Running Gravity Spy pipleine on {0}".format(DEFAULT_IFO))
 #DEFAULT_START_TIME = pandas.read_sql('SELECT max(event_time) FROM glitches_v2d0 WHERE ifo = \'{0}\''.format(DEFAULT_IFO), engine1).values[0][0]
 DEFAULT_START_TIME = 1366545618.0
-DEFAULT_STOP_TIME = tconvert('now')
+DEFAULT_STOP_TIME = 1366549518.0
 
 def parse_commandline():
     """Parse the arguments given on the command-line.
@@ -40,6 +40,8 @@ def parse_commandline():
                         help="This pickle file ", required=True)
     parser.add_argument("--cnn-model",
                         help="Path to name of cnn model", required=True)
+    parser.add_argument("--model-type",
+                        help="This can either be `yunan` or `original`", required=True)
     parser.add_argument("--similarity-model",
                         help="Path to name of similarity model",
                         required=True)
@@ -76,6 +78,7 @@ def main():
                                    plot_directory=args.plot_directory,
                                    channel_name=args.channel_name,
                                    frametype=args.frame_type,
+                                   model_type=args.model_type,
                                    nproc=20)
 
     all_spectrogram_files = []
@@ -114,6 +117,9 @@ def main():
 
     SQL_USER = os.environ['SQL_USER']
     SQL_PASS = os.environ['SQL_PASS']
-    engine = create_engine('mysql://{0}:{1}@ldvw.ligo.caltech.edu:3306/gravityspy'.format(SQL_USER,SQL_PASS))
+    engine = create_engine('mysql://{0}:{1}@127.0.0.1:33060/gravityspy'.format(SQL_USER,SQL_PASS))
     if args.upload:
-        trigs_results.to_glitch_db(table='GSMetadata', engine=engine)
+        if "ligo-la" in hostname:
+            DEFAULT_IFO = "L1"
+        else:
+            trigs_results.to_glitch_db(table='GSMetadata', engine=engine)
