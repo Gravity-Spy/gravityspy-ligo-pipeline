@@ -9,6 +9,7 @@ import os
 import sys
 import socket
 import pandas
+import math
 
 engine1 = create_engine('postgresql://{0}:{1}@gravityspyplus.ciera.northwestern.edu:5432/gravityspy'.format(os.environ['GRAVITYSPY_DATABASE_USER'],os.environ['GRAVITYSPY_DATABASE_PASSWD']))
 ### Add logic to auto determine if we are running on LLO or LHO.
@@ -19,7 +20,7 @@ else:
     DEFAULT_IFO = "H1"
 
 print("Running Gravity Spy pipleine on {0}".format(DEFAULT_IFO))
-DEFAULT_START_TIME = pandas.read_sql('SELECT max(event_time) FROM glitches_v2d0 WHERE ifo = \'{0}\''.format(DEFAULT_IFO), engine1).values[0][0]
+DEFAULT_START_TIME = math.ceil(pandas.read_sql('SELECT max(event_time) FROM glitches_v2d0 WHERE ifo = \'{0}\''.format(DEFAULT_IFO), engine1).values[0][0])
 DEFAULT_STOP_TIME = tconvert('now')
 
 def parse_commandline():
