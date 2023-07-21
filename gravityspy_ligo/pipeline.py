@@ -21,7 +21,7 @@ else:
 
 print("Running Gravity Spy pipleine on {0}".format(DEFAULT_IFO))
 DEFAULT_START_TIME = math.ceil(pandas.read_sql('SELECT max(event_time) FROM glitches_v2d0 WHERE ifo = \'{0}\''.format(DEFAULT_IFO), engine1).values[0][0])
-DEFAULT_STOP_TIME = tconvert('now')
+DEFAULT_STOP_TIME = tconvert('now') - 7200
 
 def parse_commandline():
     """Parse the arguments given on the command-line.
@@ -65,6 +65,18 @@ def parse_commandline():
 def main():
 
     args = parse_commandline()
+
+    # Test connection to LDVW, if it is broken, no need to proceed
+    SQL_USER = os.environ['SQL_USER']
+    SQL_PASS = os.environ['SQL_PASS']
+    engine = create_engine('mysql://{0}:{1}@127.0.0.1:33060/gravityspy'.format(SQL_USER,SQL_PASS))
+
+    try:
+        conn = engine.connect()
+        conn.close()
+    except:
+        print("I cannot connect to LDVW")
+        return
 
     # Find new omicron triggers
     trigs = Events.get_triggers(args.start_time, args.stop_time,
