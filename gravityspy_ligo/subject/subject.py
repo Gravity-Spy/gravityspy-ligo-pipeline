@@ -28,6 +28,8 @@ import datetime
 import panoptes_client
 import glob
 
+RETRY_DEFAULT = 3
+
 class GravitySpySubject:
     """The frame work for thinking about a single Gravity Spy subject
     """
@@ -213,7 +215,7 @@ class GravitySpySubject:
                 self.zooniverse_subject_image_filenames[subject_part]['images_to_upload'].extend([combined_image_filename])
                 self.zooniverse_subject_image_filenames[subject_part]['channels_in_this_subject'] = all_channels
 
-    def upload_to_zooniverse(self, subject_set_id, project='9979'):
+    def upload_to_zooniverse(self, subject_set_id, project='9979', save_retries=RETRY_DEFAULT):
         """Obtain omicron triggers to run gravityspy on
 
         Parameters:
@@ -233,7 +235,15 @@ class GravitySpySubject:
             for idx, image in enumerate(images_for_subject_part):
                 subject.add_location(str(image))
                 subject.metadata['Filename{0}'.format(idx+1)] = image.split('/')[-1]
-            subject.save()
+            retry = 0
+            save_success = False
+            while retry <= save_retries and not save_success:
+                try:
+                    subject.save()
+                    save_success = True
+                except:
+                    print(f"Upload failed, retry number {retry}")
+                    continue
             self.zooniverse_id = int(subject.id)
             for idx, image in enumerate(images_for_subject_part):
                 setattr(self, 'url{0}'.format(idx), subject.raw['locations'][idx]['image/png'].split('?')[0])
