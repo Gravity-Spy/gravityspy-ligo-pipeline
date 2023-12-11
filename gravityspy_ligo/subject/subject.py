@@ -30,8 +30,6 @@ import glob
 import time
 import requests
 
-RETRY_DEFAULT = 3
-
 class GravitySpySubject:
     """The frame work for thinking about a single Gravity Spy subject
     """
@@ -217,7 +215,7 @@ class GravitySpySubject:
                 self.zooniverse_subject_image_filenames[subject_part]['images_to_upload'].extend([combined_image_filename])
                 self.zooniverse_subject_image_filenames[subject_part]['channels_in_this_subject'] = all_channels
 
-    def upload_to_zooniverse(self, subject_set_id, project='9979', save_retries=RETRY_DEFAULT):
+    def upload_to_zooniverse(self, subject_set_id, project='9979', save_retries=3):
         """Obtain omicron triggers to run gravityspy on
 
         Parameters:
