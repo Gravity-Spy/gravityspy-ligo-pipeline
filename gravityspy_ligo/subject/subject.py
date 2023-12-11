@@ -28,6 +28,7 @@ import datetime
 import panoptes_client
 import glob
 import time
+import requests
 
 RETRY_DEFAULT = 3
 
@@ -242,7 +243,7 @@ class GravitySpySubject:
                 try:
                     subject.save()
                     save_success = True
-                except:
+                except (KeyError, requests.exceptions.ConnectionError) as error:
                     print(f"Upload failed, retry number {retry}")
                     retry += 1
                     time.sleep(1)
