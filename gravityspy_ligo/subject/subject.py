@@ -242,7 +242,7 @@ class GravitySpySubject:
                     subject.save()
                     save_success = True
                 except (KeyError, requests.exceptions.ConnectionError) as error:
-                    print(f"Upload failed, retry number {retry}")
+                    print(f"Zooniverse connection failed, retry number {retry}")
                     retry += 1
                     time.sleep(1)
                     continue
@@ -251,4 +251,14 @@ class GravitySpySubject:
                 setattr(self, 'url{0}'.format(idx), subject.raw['locations'][idx]['image/png'].split('?')[0])
 
             subjectset = panoptes_client.SubjectSet.find(subject_set_id)
-            subjectset.add(subject)
+            retry = 0
+            save_success = False
+            while retry <= save_retries and not save_success:
+                try:
+                    subjectset.add(subjects)
+                    save_success = True
+                except (KeyError, requests.exceptions.ConnectionError) as error:
+                    print(f"Zooniverse connection failed, retry number {retry}")
+                    retry += 1
+                    time.sleep(1)
+                    continue

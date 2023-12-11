@@ -351,7 +351,7 @@ class Events(GravitySpyTable):
                         subject.save()
                         save_success = True
                     except (KeyError, requests.exceptions.ConnectionError) as error:
-                        print(f"Upload failed, retry number {retry}")
+                        print(f"Zooniverse connection failed, retry number {retry}")
                         retry += 1
                         time.sleep(1)
                         continue
@@ -362,7 +362,17 @@ class Events(GravitySpyTable):
                 self['url3'][self['gravityspy_id'] == gid] = subject.raw['locations'][2]['image/png'].split('?')[0]
                 self['url4'][self['gravityspy_id'] == gid] = subject.raw['locations'][3]['image/png'].split('?')[0]
                 self['upload_flag'][self['gravityspy_id'] == gid] = 1
-            subjectset.add(subjects)
+            retry = 0
+            save_success = False
+            while retry <= save_retries and not save_success:
+                try:
+                    subjectset.add(subjects)
+                    save_success = True
+                except (KeyError, requests.exceptions.ConnectionError) as error:
+                    print(f"Zooniverse connection failed, retry number {retry}")
+                    retry += 1
+                    time.sleep(1)
+                    continue
 
         return self
 
