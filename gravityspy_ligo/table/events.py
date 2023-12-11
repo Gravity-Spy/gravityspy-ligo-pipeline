@@ -40,6 +40,8 @@ import random
 import os
 import glob
 import h5py
+import time
+import requests
 
 class Events(GravitySpyTable):
     """This class provides method for classifying events with gravityspy
@@ -296,7 +298,7 @@ class Events(GravitySpyTable):
         engine.dispose()
         return
 
-    def upload_to_zooniverse(self, subject_set_id=None, project='1104'):
+    def upload_to_zooniverse(self, subject_set_id=None, project='1104', save_retries=3):
         """Obtain omicron triggers to run gravityspy on
 
         Parameters:
@@ -342,7 +344,17 @@ class Events(GravitySpyTable):
                 subject.metadata['q_value'] = str(qval)
                 subject.metadata['#ml_top_confidence'] = str(ml_top_confidence)
                 subject.metadata['#ml_top_label'] = str(ml_top_label)
-                subject.save()
+                retry = 0
+                save_success = False
+                while retry <= save_retries and not save_success:
+                    try:
+                        subject.save()
+                        save_success = True
+                    except (KeyError, requests.exceptions.ConnectionError) as error:
+                        print(f"Zooniverse connection failed, retry number {retry}")
+                        retry += 1
+                        time.sleep(1)
+                        continue
                 subjects.append(subject)
                 self['links_subjects'][self['gravityspy_id'] == gid] = int(subject.id)
                 self['url1'][self['gravityspy_id'] == gid] = subject.raw['locations'][0]['image/png'].split('?')[0]
@@ -350,7 +362,17 @@ class Events(GravitySpyTable):
                 self['url3'][self['gravityspy_id'] == gid] = subject.raw['locations'][2]['image/png'].split('?')[0]
                 self['url4'][self['gravityspy_id'] == gid] = subject.raw['locations'][3]['image/png'].split('?')[0]
                 self['upload_flag'][self['gravityspy_id'] == gid] = 1
-            subjectset.add(subjects)
+            retry = 0
+            save_success = False
+            while retry <= save_retries and not save_success:
+                try:
+                    subjectset.add(subjects)
+                    save_success = True
+                except (KeyError, requests.exceptions.ConnectionError) as error:
+                    print(f"Zooniverse connection failed, retry number {retry}")
+                    retry += 1
+                    time.sleep(1)
+                    continue
 
         return self
 
