@@ -27,6 +27,7 @@ import os
 import datetime
 import panoptes_client
 import glob
+import time
 
 RETRY_DEFAULT = 3
 
@@ -244,6 +245,7 @@ class GravitySpySubject:
                 except:
                     print(f"Upload failed, retry number {retry}")
                     retry += 1
+                    time.sleep(1)
                     continue
             self.zooniverse_id = int(subject.id)
             for idx, image in enumerate(images_for_subject_part):
