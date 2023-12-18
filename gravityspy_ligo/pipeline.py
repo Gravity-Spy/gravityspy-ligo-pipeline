@@ -84,6 +84,13 @@ def main():
 
     if trigs.to_pandas().empty:
         return
+    else:
+        # Make sure we are not just reprocessing the same triggers
+        glitches = Events.fetch('gravityspy', 'glitches_v2d0', selection = ['{0} > "event_time" > {1}'.format(args.stop_time, args.start_time)], host='gravityspyplus.ciera.northwestern.edu')
+        mask = []
+        for event_time in trigs["event_time"]:
+            mask.append(event_time not in list(glitches["event_time"]))
+        trigs = trigs[mask]
 
     # Make q transforms and label the images
     trigs_results = trigs.classify(path_to_cnn=args.cnn_model,
@@ -104,31 +111,14 @@ def main():
                                   path_to_semantic_model=args.similarity_model)
     features['ifo'] = args.channel_name.split(':')[0]
 
+    # Find the links_subjects after upload and add them to the features table
+    event_times = trigs_results.to_pandas().loc[trigs_results.to_pandas().gravityspy_id.isin(features.to_pandas().gravityspy_id), 'event_time'].values
+    features['event_time'] = event_times
+    features = Events(features)
+
     # Determine based on ml scores what level these images should go to
     trigs_results.determine_workflow_and_subjectset(project_info_pickle=args.project_info_pickle)
 
     if args.upload:
         # upload them based on this information
-        trigs_results.upload_to_zooniverse()
-
-    # Find the links_subjects after upload and add them to the features table
-    subject_ids = trigs_results.to_pandas().loc[trigs_results.to_pandas().gravityspy_id.isin(features.to_pandas().gravityspy_id), 'links_subjects'].values
-    event_times = trigs_results.to_pandas().loc[trigs_results.to_pandas().gravityspy_id.isin(features.to_pandas().gravityspy_id), 'event_time'].values
-    features['links_subjects'] = subject_ids
-    features['event_time'] = event_times
-    features = Events(features)
-
-    # convert objects to unicode string for upload to sql table
-    for col in trigs_results.itercols():
-        if col.dtype.kind in 'O':
-            trigs_results.replace_column(col.name, col.astype('str'))
-
-    if args.upload:
-        trigs_results.to_sql(table="glitches_v2d0")
-        features.to_sql(table='similarity_index_o3')
-
-    SQL_USER = os.environ['SQL_USER']
-    SQL_PASS = os.environ['SQL_PASS']
-    engine = create_engine('mysql://{0}:{1}@127.0.0.1:33060/gravityspy'.format(SQL_USER,SQL_PASS))
-    if args.upload:
-        trigs_results.to_glitch_db(table='GSMetadata', engine=engine)
+        trigs_results.upload_to_zooniverse(features_table=features)

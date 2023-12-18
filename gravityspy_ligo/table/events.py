@@ -191,7 +191,16 @@ class Events(GravitySpyTable):
                     pass
             engine = create_engine(get_connection_str(**conn_kw))
 
-        self.to_pandas().to_sql(table, engine, index=False, if_exists=if_exists)
+        # make a copy of self since we will do some column type manipulation
+        # before updatignt the SQL tables
+        events_table_copy = self.copy()
+
+        # convert objects to unicode string for upload to sql table
+        for col in events_table_copy.itercols():
+            if col.dtype.kind in 'O':
+                events_table_copy.replace_column(col.name, col.astype('str'))
+
+        events_table_copy.to_pandas().to_sql(table, engine, index=False, if_exists=if_exists)
         engine.dispose()
         return
 
@@ -203,7 +212,16 @@ class Events(GravitySpyTable):
         """
         from sqlalchemy.engine import create_engine
 
-        tab = self.to_pandas()
+        # make a copy of self since we will do some column type manipulation
+        # before updatignt the SQL tables
+        events_table_copy = self.copy()
+
+        # convert objects to unicode string for upload to sql table
+        for col in events_table_copy.itercols():
+            if col.dtype.kind in 'O':
+                events_table_copy.replace_column(col.name, col.astype('str'))
+
+        tab = events_table_copy.to_pandas()
         def makelink(x):
             # This horrendous thing obtains the public html path for image
             intermediate_path = '/'.join(list(filter(None,str(x.Filename1).split('/')))[3:-1])
@@ -296,7 +314,7 @@ class Events(GravitySpyTable):
         engine.dispose()
         return
 
-    def upload_to_zooniverse(self, subject_set_id=None, project='1104'):
+    def upload_to_zooniverse(self, subject_set_id=None, project='1104', features_table=None, upload_to_ldvw=True):
         """Obtain omicron triggers to run gravityspy on
 
         Parameters:
@@ -305,6 +323,7 @@ class Events(GravitySpyTable):
         Returns:
             `Events` table
         """
+        from sqlalchemy.engine import create_engine
         for col in self.itercols():
             if col.dtype.kind in 'SU':
                 self.replace_column(col.name, col.astype('object'))
@@ -350,6 +369,16 @@ class Events(GravitySpyTable):
                 self['url3'][self['gravityspy_id'] == gid] = subject.raw['locations'][2]['image/png'].split('?')[0]
                 self['url4'][self['gravityspy_id'] == gid] = subject.raw['locations'][3]['image/png'].split('?')[0]
                 self['upload_flag'][self['gravityspy_id'] == gid] = 1
+                self[self['gravityspy_id'] == gid].to_sql(table="glitches_v2d0")
+                if features_table is not None:
+                    glitch_features = features_table[features_table['gravityspy_id'] == gid]
+                    glitch_features["links_subjects"] = int(subject.id)
+                    glitch_features.to_sql(table='similarity_index_o3')
+                if upload_to_ldvw:
+                    SQL_USER = os.environ['SQL_USER']
+                    SQL_PASS = os.environ['SQL_PASS']
+                    engine = create_engine('mysql://{0}:{1}@127.0.0.1:33060/gravityspy'.format(SQL_USER,SQL_PASS))
+                    self[self['gravityspy_id'] == gid].to_glitch_db(table='GSMetadata', engine=engine)
             subjectset.add(subjects)
 
         return self
