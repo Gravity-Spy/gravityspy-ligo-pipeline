@@ -325,23 +325,20 @@ def split_data_set(data, fraction_validation=.125, fraction_testing=None,
 
     return concat_train, concat_valid, concat_test
 
-def inception_resnet_module(x, num_feature_maps):
-    weight_decay = 0.001
-    # Pooling operation
-    tower_4 = MaxPooling2D((3, 3), strides=(1, 1), padding='same')(x)
+def inception_resnet_module(x, num_filters):
 
     # Inception module
-    tower_1 = Conv2D(num_feature_maps, (1, 1), padding='same', activation='relu', kernel_regularizer=tf.keras.regularizers.l2(weight_decay))(x)
-    tower_2 = Conv2D(num_feature_maps, (1, 1), padding='same', activation='relu', kernel_regularizer=tf.keras.regularizers.l2(weight_decay))(x)
-    tower_2 = Conv2D(num_feature_maps, (3, 3), padding='same', activation='relu', kernel_regularizer=tf.keras.regularizers.l2(weight_decay))(tower_2)
-    tower_3 = Conv2D(num_feature_maps, (1, 1), padding='same', activation='relu', kernel_regularizer=tf.keras.regularizers.l2(weight_decay))(x)
-    tower_3 = Conv2D(num_feature_maps, (5, 5), padding='same', activation='relu', kernel_regularizer=tf.keras.regularizers.l2(weight_decay))(tower_3)
-    tower_4 = Conv2D(num_feature_maps, (1, 1), padding='same', activation='relu', kernel_regularizer=tf.keras.regularizers.l2(weight_decay))(tower_4)
-
+    tower_1 = Conv2D(num_filters, (1,1), padding='same', activation='relu')(x)
+    tower_2 = Conv2D(num_filters, (1,1), padding='same', activation='relu')(x)
+    tower_2 = Conv2D(num_filters, (3,3), padding='same', activation='relu')(tower_2)
+    tower_3 = Conv2D(num_filters, (1,1), padding='same', activation='relu')(x)
+    tower_3 = Conv2D(num_filters, (5,5), padding='same', activation='relu')(tower_3)
+    tower_4 = MaxPooling2D((3,3), strides=(1,1), padding='same')(x)
+    tower_4 = Conv2D(num_filters, (1,1), padding='same', activation='relu')(tower_4)
     output = Concatenate()([tower_1, tower_2, tower_3, tower_4])
 
     # Residual connection
-    shortcut = Conv2D(num_feature_maps * 4, (1, 1), padding='same', kernel_regularizer=tf.keras.regularizers.l2(weight_decay))(x)
+    shortcut = Conv2D(num_filters*4, (1,1), padding='same')(x)
     output = tf.keras.layers.add([shortcut, output])
 
     # Activation
@@ -430,7 +427,6 @@ class AttentionLayer(Layer):
         # instances = [self.compute_attention_scores(instance) for instance in inputs]
 
         # Apply softmax over instances such that the output summation is equal to 1.
-        # instances = tf.reshape(instances, shape=(-1,dim[2]))
         alpha = tf.math.softmax(instances, axis=1)
 
         return alpha
@@ -464,49 +460,48 @@ class AttentionLayer(Layer):
         return config
 
 def build_baseline(x):
-    weight_decay = 0.001
 
-    x = Conv2D(16, (5, 5), padding='valid', kernel_regularizer=tf.keras.regularizers.l2(weight_decay))(x)
-    x = BatchNormalization()(x)
-    x = Activation("elu")(x)
-    x = MaxPooling2D(pool_size=(3, 3))(x)
+  x = Conv2D(16, (5, 5), padding='valid')(x)
+  x = Activation("relu")(x)
+  x = BatchNormalization()(x)
+  x = MaxPooling2D(pool_size=(3, 3))(x)
 
-    x = Conv2D(32, (5, 5), padding='valid', kernel_regularizer=tf.keras.regularizers.l2(weight_decay))(x)
-    x = BatchNormalization()(x)
-    x = Activation("elu")(x)
-    x = MaxPooling2D(pool_size=(2, 2))(x)
+  x = Conv2D(32, (5, 5), padding='valid')(x)
+  x = Activation("relu")(x)
+  x = BatchNormalization()(x)
+  x = MaxPooling2D(pool_size=(2, 2))(x)
 
-    x = inception_resnet_module(x,16)
+  x = inception_resnet_module(x,16)
 
-    x = Conv2D(64, (5, 5), padding='valid', kernel_regularizer=tf.keras.regularizers.l2(weight_decay))(x)
-    x = BatchNormalization()(x)
-    x = Activation("elu")(x)
-    x = MaxPooling2D(pool_size=(2, 2))(x)
+  x = Conv2D(64, (5, 5), padding='valid')(x)
+  x = Activation("relu")(x)
+  x = BatchNormalization()(x)
+  x = MaxPooling2D(pool_size=(2, 2))(x)
 
-    x = inception_resnet_module(x,16)
+  x = inception_resnet_module(x,16)
 
-    x = Conv2D(64, (5, 5), padding='valid', kernel_regularizer=tf.keras.regularizers.l2(weight_decay))(x)
-    x = BatchNormalization()(x)
-    x = Activation("elu")(x)
-    x = MaxPooling2D(pool_size=(2, 2))(x)
+  x = Conv2D(64, (5, 5), padding='valid')(x)
+  x = Activation("relu")(x)
+  x = BatchNormalization()(x)
+  x = MaxPooling2D(pool_size=(2, 2))(x)
 
-    x = inception_resnet_module(x,32)   
+  x = inception_resnet_module(x,32)   
 
-    x = Conv2D(128, (5, 5), padding='valid', kernel_regularizer=tf.keras.regularizers.l2(weight_decay))(x)
-    x = BatchNormalization()(x)
-    x = Activation("elu")(x)
-    x = MaxPooling2D(pool_size=(2, 2))(x)
+  x = Conv2D(128, (5, 5), padding='valid')(x)
+  x = Activation("relu")(x)
+  x = BatchNormalization()(x)
+  x = MaxPooling2D(pool_size=(2, 2))(x)
 
-    x = Dropout(0.25)(x)
-    x = Flatten()(x)
-    x = Dense(128, kernel_regularizer=tf.keras.regularizers.l2(weight_decay))(x)
-    x = Activation('elu')(x)
-    x = tf.expand_dims(x, axis=1)
+  x = Dropout(0.25)(x)
+  x = Flatten()(x)
+  x = Dense(128)(x)
+  x = Activation('relu')(x)
+  x = tf.expand_dims(x, axis=1)
+  # x = Dropout(0.25)(x)
 
-    return x
+  return x
 
 def GS_new(nb_classes, img_rows, img_cols, channel_num):
-
     initializer = glorot_normal()
 
     input_tensor_0_5 = tf.keras.layers.Input(shape=(img_rows, img_cols, channel_num), name="0.5")
@@ -530,14 +525,14 @@ def GS_new(nb_classes, img_rows, img_cols, channel_num):
 
     att = AttentionLayer(
         weight_params_dim=64,
-        kernel_regularizer=tf.keras.regularizers.l2(0.01),
+        kernel_regularizer= tf.keras.regularizers.l2(0.01),
         use_gated=True,
         name="alpha",
     )(concat)
 
     intermediate = tf.linalg.matmul(att,concat, transpose_a = True) 
     intermediate = tf.squeeze(intermediate, axis=1)  
-    output = tf.keras.layers.Dense(nb_classes, activation = 'softmax', name = 'Last_layer')(intermediate)  
+    output = tf.keras.layers.Dense(nb_classes, activation = 'softmax', name = 'Last_layer')(intermediate) 
 
     final_model = tf.keras.models.Model(inputs=[input_tensor_0_5,input_tensor_1_0,input_tensor_2_0,input_tensor_4_0], outputs=output)
 
