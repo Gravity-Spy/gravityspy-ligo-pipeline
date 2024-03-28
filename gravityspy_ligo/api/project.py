@@ -132,10 +132,7 @@ class ZooProject(object):
         of golden sets associated with that workflow
         """
         with open('{0}'.format(cache_file), 'r') as yaml_file:
-            try:
-                return yaml.load(yaml_file, Loader=yaml.Loader)
-            except:
-                return yaml.load(yaml_file)
+            return yaml.load(yaml_file, Loader=yaml.Loader)
 
 
     def get_golden_subject_sets(self):
