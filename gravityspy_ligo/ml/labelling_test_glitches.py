@@ -4,7 +4,6 @@ from .GS_utils import GS_new
 from keras.models import load_model
 from PIL import Image
 from keras.applications.vgg16 import preprocess_input
-import pdb
 
 import numpy
 import os
@@ -115,7 +114,6 @@ def label_glitches(image_data, model_name, model_type,
     fourth_image_in_panel = sorted(image_data.filter(regex=(image_order[3])).keys())
     
     # read in 4 durations
-    pdb.set_trace()
     test_set_unlabelled_x_1 = numpy.vstack(image_data[first_image_in_panel].iloc[0]).reshape(reshape_order)
     test_set_unlabelled_x_2 = numpy.vstack(image_data[second_image_in_panel].iloc[0]).reshape(reshape_order)
     test_set_unlabelled_x_3 = numpy.vstack(image_data[third_image_in_panel].iloc[0]).reshape(reshape_order)
