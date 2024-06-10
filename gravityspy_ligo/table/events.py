@@ -314,7 +314,7 @@ class Events(GravitySpyTable):
         engine.dispose()
         return
 
-    def upload_to_zooniverse(self, subject_set_id=None, project='1104', features_table=None, upload_to_ldvw=True):
+    def upload_to_zooniverse(self, subject_set_id=None, project='1104', features_table=None, upload_to_ldvw=True, engine=None):
         """Obtain omicron triggers to run gravityspy on
 
         Parameters:
@@ -377,7 +377,8 @@ class Events(GravitySpyTable):
                 if upload_to_ldvw:
                     SQL_USER = os.environ['SQL_USER']
                     SQL_PASS = os.environ['SQL_PASS']
-                    engine = create_engine('mysql://{0}:{1}@127.0.0.1:33060/gravityspy'.format(SQL_USER,SQL_PASS))
+                    if engine == None:
+                        engine = create_engine('mysql://{0}:{1}@127.0.0.1:33060/gravityspy'.format(SQL_USER,SQL_PASS))
                     self[self['gravityspy_id'] == gid].to_glitch_db(table='GSMetadata', engine=engine)
             subjectset.add(subjects)
 

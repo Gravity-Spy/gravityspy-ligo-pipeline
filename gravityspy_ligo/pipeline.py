@@ -56,6 +56,7 @@ def parse_commandline():
                         default='DMT-ANALYSIS_READY:1')
     parser.add_argument("--upload", action="store_true", default=False,
                         help="Run without uploading results")
+    parser.add_argument("--port", help="what port for sql connection", required=True)
     args = parser.parse_args()
 
 
@@ -69,10 +70,10 @@ def main():
     # Test connection to LDVW, if it is broken, no need to proceed
     SQL_USER = os.environ['SQL_USER']
     SQL_PASS = os.environ['SQL_PASS']
-    engine = create_engine('mysql://{0}:{1}@127.0.0.1:33060/gravityspy'.format(SQL_USER,SQL_PASS))
+    sql_engine = create_engine('mysql://{0}:{1}@127.0.0.1:{2}/gravityspy'.format(SQL_USER,SQL_PASS, args.port))
 
     try:
-        conn = engine.connect()
+        conn = sql_engine.connect()
         conn.close()
     except:
         print("I cannot connect to LDVW")
@@ -121,4 +122,4 @@ def main():
 
     if args.upload:
         # upload them based on this information
-        trigs_results.upload_to_zooniverse(features_table=features)
+        trigs_results.upload_to_zooniverse(features_table=features, engine = sql_engine)
