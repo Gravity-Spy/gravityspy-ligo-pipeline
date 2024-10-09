@@ -104,19 +104,21 @@ class Events(GravitySpyTable):
                 tab.remove_column('tstart')
             if 'bandwidth' not in colnames:
                 tab['bandwidth'] = tab['fend'] - tab['fstart']
-                tab.remove_column('fend')
-                tab.remove_column('fstart')
             if 'q_value' not in colnames:
                 tab['q_value'] = tab['q']
                 tab.remove_column('q')
             if 'central_freq' not in colnames:
-                tab['central_freq'] = [None for x in tab]
+                tab['central_freq'] = (tab['fend'] + tab['fstart']) / 2.
             if 'chisq' not in colnames:
                 tab['chisq'] = [None for x in tab]
             if 'chisq_dof' not in colnames:
                 tab['chisq_dof'] = [None for x in tab]
             if 'phase' in colnames:
                 tab.remove_column('phase')
+            if 'fend' in colnames:
+                tab.remove_column('fend')
+            if 'fstart' in colnames:
+                tab.remove_column('fstart')
 
         return tab
 
