@@ -57,6 +57,7 @@ class Events(GravitySpyTable):
         etg = kwargs.pop('etg', 'OMICRON')
         model_name = kwargs.pop('model_name', 'O4_v1')
         tab = super(Events, cls).read(*args, **kwargs)
+        colnames = tab.colnames
         tab = tab.to_pandas()
         if etg != 'hveto':
             if 'gravityspy_id' not in tab.columns:
@@ -72,16 +73,50 @@ class Events(GravitySpyTable):
                 tab['url3'] = ''
                 tab['url4'] = '' 
 
+        # multiple checks to refactor hdf5 data 
+        # into xml format if needed
         if etg == 'OMICRON':
-            tab['event_id'] = tab['event_id'].apply(int)
-            tab['process_id'] = tab['process_id'].apply(int)
+            if 'event_id' not in colnames: 
+                tab['event_id'] = list(range(len(tab)))
+            else:
+                tab['event_id'] = tab['event_id'].apply(int)
+            if 'process_id' not in colnames:
+                tab['process_id'] = list(range(len(tab)))
+            else:
+                tab['process_id'] = tab['process_id'].apply(int)
 
         tab = cls.from_pandas(tab)
 
         if etg == 'OMICRON':
-            tab['event_time'] = (tab['peak_time'] +
-                                 (0.000000001)*tab['peak_time_ns'])
+            if 'event_time' not in colnames:
+                tab['event_time'] = tab['time']
+                tab.remove_column('time')
+            else:
+                tab['event_time'] = (tab['peak_time'] +
+                                     (0.000000001)*tab['peak_time_ns'])
             tab['event_time'].format = '%.9f'
+            if 'peak_frequency' not in colnames:
+                tab['peak_frequency'] = tab['frequency']
+                tab.remove_column('frequency')
+            if 'duration' not in colnames:
+                tab['duration'] = tab['tend'] - tab['tstart']
+                tab.remove_column('tend')
+                tab.remove_column('tstart')
+            if 'bandwidth' not in colnames:
+                tab['bandwidth'] = tab['fend'] - tab['fstart']
+                tab.remove_column('fend')
+                tab.remove_column('fstart')
+            if 'q_value' not in colnames:
+                tab['q_value'] = tab['q']
+                tab.remove_column('q')
+            if 'central_freq' not in colnames:
+                tab['central_freq'] = [None for x in tab]
+            if 'chisq' not in colnames:
+                tab['chisq'] = [None for x in tab]
+            if 'chisq_dof' not in colnames:
+                tab['chisq_dof'] = [None for x in tab]
+            if 'phase' in colnames:
+                tab.remove_column('phase')
 
         return tab
 
@@ -553,9 +588,10 @@ class Events(GravitySpyTable):
 
             # get Omicron triggers
             files = find_trigger_files(channel,'Omicron',
-                                       float(start),float(end))
+                                       float(start),float(end), ext='h5')
 
-            triggers = cls.read(files, tablename='sngl_burst', format='ligolw')
+            triggers = cls.read(files, path='triggers')#, tablename='sngl_burst', format='ligolw')
+            triggers['ifo'] = [channel[:2] for x in triggers]
 
         elif algorithm == 'hveto':
             logger = log.Logger('Gravity Spy: HVeto')
