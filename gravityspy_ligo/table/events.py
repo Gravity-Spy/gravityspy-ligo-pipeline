@@ -90,6 +90,7 @@ class Events(GravitySpyTable):
         if etg == 'OMICRON':
             if 'event_time' not in colnames:
                 tab['event_time'] = tab['time']
+                tab['peak_time'] = tab['time'].astype(int)
                 tab.remove_column('time')
             else:
                 tab['event_time'] = (tab['peak_time'] +
