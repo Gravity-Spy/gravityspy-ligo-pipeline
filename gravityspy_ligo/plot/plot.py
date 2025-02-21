@@ -108,8 +108,10 @@ def plot_qtransform(spectrogram, plot_normalized_energy_range, plot_time_ranges,
         title = title + ' - O4'
     elif 1394323218 < start_time < 1396656018:
         title = title + ' - ER16'
-    elif 1396656018 < start_time:
+    elif 1396656018 < start_time < 1422118818:
         title = title + ' - O4b'
+    elif start_time < 1422118818:
+        title = title + ' - O4c'
     else:
         raise ValueError('Time outside science or engineering run '
                          'or more likely code not updated to reflect '
