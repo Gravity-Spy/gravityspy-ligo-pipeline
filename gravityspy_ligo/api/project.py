@@ -11,6 +11,7 @@ import re, pickle
 import os
 import pandas
 import numpy as np
+import yaml
 
 __all__ = ['ZooProject', 'flatten', 'GravitySpyProject',
            'workflow_with_most_answers']
@@ -73,7 +74,7 @@ class ZooProject(object):
             self.workflow_info[str(iWorkflow)] = flatten(tmp1.raw)
 
 
-    def cache_project(self):
+    def cache_project_pickle(self):
         """Parameters
         ----------
 
@@ -87,8 +88,21 @@ class ZooProject(object):
         pickle.dump(self, output, protocol=2)
         return
 
+    def cache_project(self):
+        """Parameters
+        ----------
+
+        Returns
+        -------
+        A dict with keys of workflow IDs and values list
+        of golden sets associated with that workflow
+        """
+        output = open('{0}.yaml'.format(self.zoo_project_id), 'w')
+        yaml.dump(self, output)
+        return
+
     @classmethod
-    def load_project_from_cache(cls, cache_file):
+    def load_project_from_cache_pickle(cls, cache_file):
         """Parameters
         ----------
         cache_file : `str` needs a '.pkl' extension
@@ -104,6 +118,21 @@ class ZooProject(object):
                 return pickle.load(pickle_file, encoding='latin1')
             except:
                 return pickle.load(pickle_file)
+            
+
+    @classmethod
+    def load_project_from_cache(cls, cache_file):
+        """Parameters
+        ----------
+        cache_file : `str` needs a '.yaml' extension
+
+        Returns
+        -------
+        A dict with keys of workflow IDs and values list
+        of golden sets associated with that workflow
+        """
+        with open('{0}'.format(cache_file), 'r') as yaml_file:
+            return yaml.load(yaml_file, Loader=yaml.Loader)
 
 
     def get_golden_subject_sets(self):

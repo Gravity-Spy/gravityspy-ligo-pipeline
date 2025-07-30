@@ -468,7 +468,7 @@ class Events(GravitySpyTable):
 
         return Events(results)
 
-    def determine_workflow_and_subjectset(self, project_info_pickle):
+    def determine_workflow_and_subjectset(self, project_info_yaml):
         """Obtain omicron triggers to run gravityspy on
         Parameters:
             path_to_cnn (str): filename of file with Gravity Spy project info
@@ -478,8 +478,10 @@ class Events(GravitySpyTable):
         if 'ml_confidence' not in self.keys() or 'ml_label' not in self.keys():
             raise ValueError("This method only works if the confidence and label "
                              "of the image in known.")
+        
+        # importing gspyproject, used to be from pickle, now yaml
         gspyproject = GravitySpyProject.load_project_from_cache(
-                                                                project_info_pickle
+                                                                project_info_yaml
                                                                 )
 
         workflows_for_each_class = gspyproject.get_level_structure(IDfilter='O2')
