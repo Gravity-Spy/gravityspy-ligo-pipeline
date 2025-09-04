@@ -1,12 +1,14 @@
 import tensorflow as tf
 from .GS_utils import concatenate_views
 from .GS_utils import GS_new
+from .GS_utils import get_glitch_class_names
 from keras.models import load_model
 from PIL import Image
 from keras.applications.vgg16 import preprocess_input
 
 import numpy
 import os
+import pandas
 
 '''
 By Sara Bahaadini and Neda Rohani, IVPL, Northwestern University.
@@ -41,7 +43,8 @@ def main(image_data, model_adr, image_size=[140, 170], verbose=False):
     return dw[0], numpy.argmax(dwslice)
 
 
-def label_glitches(image_data, model_name, model_type,
+def label_glitches(image_data, model_name, model_type, 
+                   project_info_yaml, yaml_configuration_number,
                    order_of_channels="channels_last",
                    image_order=['0.5.png', '1.0.png', '2.0.png', '4.0.png'],
                    image_size=[140, 170],
@@ -74,11 +77,24 @@ def label_glitches(image_data, model_name, model_type,
             confidence scores per class (b/t 0 and 1)
             index_label (int): ml label
     """
+    
+       
+    #this should also hopefully fix index error
+    #if image_data.empty:
+        #print("No image data to classify — skipping")
+        #return pandas.DataFrame()
 
     numpy.random.seed(1986)  # for reproducibility
 
     img_rows, img_cols = image_size[0], image_size[1]
-
+    
+    # Load number of classes from length of class names list in yaml
+    classes = get_glitch_class_names(project_info_yaml, yaml_configuration_number)
+    
+    # remove "None_of_the_Above" if present
+    classes = [c for c in classes if c.lower() != "none_of_the_above"]
+    
+    num_classes = len(classes) # Need to remove class “none of the above”, not relevant
 
     if model_type == "yunan":
         # load a model and weights
@@ -89,29 +105,32 @@ def label_glitches(image_data, model_name, model_type,
         else:
             raise ValueError("Do not understand supplied channel order")
 
-        final_model = GS_new(23, img_rows, img_cols, 3)
+        final_model = GS_new(num_classes, img_rows, img_cols, 3)
         final_model.load_weights(model_name)
 
+    # original not updated for new code
     elif model_type == "original":
+        raise NameError("Only accepting yunan")
         # load a model and weights
-        if order_of_channels == 'channels_last':
-            reshape_order = (-1, img_rows, img_cols, 1)
-        elif order_of_channels == 'channels_first':
-            reshape_order = (-1, 1, img_rows, img_cols)
-        else:
-            raise ValueError("Do not understand supplied channel order")
-        final_model = load_model(model_name)
-    else:
-        raise ValueError("Invalid model_type supplied, must be on of `yunan` or `original`.")
+        #if order_of_channels == 'channels_last':
+            #reshape_order = (-1, img_rows, img_cols, 1)
+        #elif order_of_channels == 'channels_first':
+            #reshape_order = (-1, 1, img_rows, img_cols)
+        #else:
+            #raise ValueError("Do not understand supplied channel order")
+        #final_model = load_model(model_name)
+    #else:
+        #raise ValueError("Invalid model_type supplied, must be on of `yunan` or `original`.")
 
-    final_model.compile(loss='categorical_crossentropy',
-                        optimizer='adadelta',
-                        metrics=['accuracy'])
-
+    #final_model.compile(loss='categorical_crossentropy',
+                        #optimizer='adadelta',
+                        #metrics=['accuracy'])
+    
     first_image_in_panel = sorted(image_data.filter(regex=(image_order[0])).keys())
     second_image_in_panel = sorted(image_data.filter(regex=(image_order[1])).keys())
     third_image_in_panel = sorted(image_data.filter(regex=(image_order[2])).keys())
     fourth_image_in_panel = sorted(image_data.filter(regex=(image_order[3])).keys())
+
     
     # read in 4 durations
     test_set_unlabelled_x_1 = numpy.vstack(image_data[first_image_in_panel].iloc[0]).reshape(reshape_order)
@@ -120,13 +139,14 @@ def label_glitches(image_data, model_name, model_type,
     test_set_unlabelled_x_4 = numpy.vstack(image_data[fourth_image_in_panel].iloc[0]).reshape(reshape_order)
 
     if model_type == "original":
-        concat_test_unlabelled = concatenate_views(test_set_unlabelled_x_1,
-                                                   test_set_unlabelled_x_2,
-                                                   test_set_unlabelled_x_3,
-                                                   test_set_unlabelled_x_4,
-                                                   [img_rows, img_cols],
-                                                   False,
-                                                   order_of_channels)
+        raise NameError("Only accepting yunan")
+        #concat_test_unlabelled = concatenate_views(test_set_unlabelled_x_1,
+                                                   #test_set_unlabelled_x_2,
+                                                   #test_set_unlabelled_x_3,
+                                                   #test_set_unlabelled_x_4,
+                                                   #[img_rows, img_cols],
+                                                   #False,
+                                                   #order_of_channels)
     elif model_type == "yunan":
         concat_test_unlabelled = {
                 "0.5": test_set_unlabelled_x_1,

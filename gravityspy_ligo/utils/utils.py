@@ -20,12 +20,13 @@ from . import log
 from ..plot.plot import plot_qtransform
 from ..ml import read_image
 from ..ml import labelling_test_glitches as label_glitches
+from ..ml import GS_utils
+
 
 from gwpy.timeseries import TimeSeries
 from gwpy.segments import Segment
 from gwpy.table import GravitySpyTable
 from gwpy import time
-
 
 import numpy
 import h5py
@@ -147,7 +148,7 @@ def make_q_scans(event_time, **kwargs):
                               fres=0.5, outseg=outseg, whiten=True)
 
     q_value = q_scan.q
-    
+
     if verbose:
         logger.info('The most significant q value is {0}'.format(q_value))
 
@@ -208,7 +209,8 @@ def save_q_scans(plot_directory, specsgrams,
 
     return individual_image_filenames, combined_image_filename
 
-def label_q_scans(filenames_of_images_to_classify, path_to_cnn, **kwargs):
+
+def label_q_scans(filenames_of_images_to_classify, path_to_cnn, project_info_yaml, yaml_configuration_number, **kwargs):
     """Classify triggers in this table
 
     Parameters:
@@ -225,32 +227,41 @@ def label_q_scans(filenames_of_images_to_classify, path_to_cnn, **kwargs):
         raise ValueError("model type must be of type `yunan` of `original`")
 
     if model_type == "original":
+        raise NameError("Only accepting yunan")
         f = h5py.File(path_to_cnn, 'r')
         # load the api gravityspy project cached class
         classes = kwargs.pop('classes',
                              numpy.array(f['/labels/labels']).astype(str).T[0])
     elif model_type == "yunan":
-        classes = ['1080Lines', '1400Ripples', 'Air_Compressor',
-                   'Blip', 'Blip_Low_Frequency', 'Chirp', 'Extremely_Loud', 
-                   'Fast_Scattering', 'Helix', 'Koi_Fish', 'Light_Modulation',
-                   'Low_Frequency_Burst', 'Low_Frequency_Lines', 'No_Glitch',
-                   'Paired_Doves', 'Power_Line', 'Repeating_Blips', 'Scattered_Light',
-                   'Scratchy', 'Tomte', 'Violin_Mode', 'Wandering_Line', 'Whistle']
+        #classes = ['1080Lines', '1400Ripples', 'Air_Compressor',
+        #           'Blip', 'Blip_Low_Frequency', 'Chirp', 'Extremely_Loud', 
+        #           'Fast_Scattering', 'Helix', 'Koi_Fish', 'Light_Modulation',
+        #           'Low_Frequency_Burst', 'Low_Frequency_Lines', 'No_Glitch',
+        #           'Paired_Doves', 'Power_Line', 'Repeating_Blips', 'Scattered_Light',
+        #           'Scratchy', 'Tomte', 'Violin_Mode', 'Wandering_Line', 'Whistle']
+        
+
+        # Classes now defined from yaml
+
+        classes = GS_utils.get_glitch_class_names(project_info_yaml, yaml_configuration_number)
+        # remove "None_of_the_Above" if present
+        classes = [c for c in classes if c.lower() != "none_of_the_above"] 
 
     if verbose:
         logger = log.Logger('Gravity Spy: Labelling Images')
         logger.info('Converting image to ML readable...')
 
     if model_type == "original":
-        image_size = [140, 170]
-        image_data_for_cnn = pandas.DataFrame()
-        for image in filenames_of_images_to_classify:
-            if verbose:
-                logger.info('Converting {0}'.format(image))
+        raise NameError("Only accepting yunan")
+        #image_size = [140, 170]
+        #image_data_for_cnn = pandas.DataFrame()
+        #for image in filenames_of_images_to_classify:
+            #if verbose:
+                #logger.info('Converting {0}'.format(image))
 
-            image_data = read_image.read_grayscale(image,
-                                                   resolution=0.3)
-            image_data_for_cnn[image.split('/')[-1]] = [image_data]
+            #image_data = read_image.read_grayscale(image,
+                                                   #resolution=0.3)
+            #image_data_for_cnn[image.split('/')[-1]] = [image_data]
     elif model_type == "yunan":
         image_size = [448, 448]
         image_data_for_cnn = pandas.DataFrame()
@@ -265,10 +276,13 @@ def label_q_scans(filenames_of_images_to_classify, path_to_cnn, **kwargs):
     if verbose:
         logger.info('Labelling image...')
 
+
     scores, ml_label, ids, filename1, filename2, filename3, filename4 = \
          label_glitches.label_glitches(image_data=image_data_for_cnn,
                                        model_name='{0}'.format(path_to_cnn),
                                        model_type=model_type,
+                                       project_info_yaml=project_info_yaml, 
+                                       yaml_configuration_number=yaml_configuration_number,
                                        image_size=image_size,
                                        order_of_channels=order_of_channels,
                                        image_order=image_order,
@@ -314,9 +328,14 @@ def label_select_images(filename1, filename2, filename3, filename4,
                           filename2,
                           filename3,
                           filename4]
-
+    
     list_of_images_all = zip(list_of_images_all[0], list_of_images_all[1],
                              list_of_images_all[2], list_of_images_all[3])
+
+    #hopefully this stops index error
+    if not all([filename1, filename2, filename3, filename4]):
+        print("Skipping due to missing files in one or more categories.")
+        return pandas.DataFrame()
 
     if verbose:
         logger.info('Converting image to ML readable...')
@@ -352,6 +371,8 @@ def label_select_images(filename1, filename2, filename3, filename4,
     scores_table['gravityspy_id'] = ids
     scores_table['ml_label'] = labels
     scores_table['ml_confidence'] = scores.max(1)
+    
+
 
     return scores_table
 
@@ -413,6 +434,7 @@ def get_features(filenames_of_images_to_classify, path_to_semantic_model, **kwar
     Returns
     -------
     """
+   
     verbose = kwargs.pop('verbose', False)
     order_of_channels = kwargs.pop('order_of_channels', 'channels_last')
 
@@ -479,6 +501,7 @@ def get_deeplayer(plot_directory, path_to_cnn, **kwargs):
         image_data = read_image.read_grayscale(os.path.join(plot_directory, image),
                                                resolution=0.3)
         image_data_for_cnn[image] = [image_data]
+
 
     # Now label the image
     if verbose:

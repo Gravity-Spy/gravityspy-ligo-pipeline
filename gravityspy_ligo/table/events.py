@@ -28,6 +28,7 @@ from keras.models import load_model
 
 from ..utils import log
 from ..utils import utils
+from ..ml import GS_utils
 from ..api.project import GravitySpyProject
 from ..ml.train_classifier import make_model
 
@@ -40,6 +41,12 @@ import random
 import os
 import glob
 import h5py
+import itertools
+
+import logging
+logger = logging.getLogger(__name__)
+
+from itertools import islice
 
 class Events(GravitySpyTable):
     """This class provides method for classifying events with gravityspy
@@ -161,16 +168,17 @@ class Events(GravitySpyTable):
         # make a list of event times
         inputs = zip(self['event_time'], self['ifo'],
                      self['gravityspy_id'])
-
+        print('inputs zip:', inputs)
         inputs = ((etime, ifo, gid, config, plot_directory,
                    timeseries, source, channel_name, frametype, nproc, verbose)
-                  for etime, ifo, gid in inputs)
-
+                  for etime, ifo, gid in inputs)    
+                
         # make q_scans
         output = mp_utils.multiprocess_with_queues(nproc,
                                                    _make_single_qscan,
                                                    inputs)
-
+        
+               
         qvalues = []
         spectrogram_file_names_dur1 = []
         spectrogram_file_names_dur2 = []
@@ -178,11 +186,12 @@ class Events(GravitySpyTable):
         spectrogram_file_names_dur4 = []
         all_spectrogram_files = []
 
-        # raise exceptions (from multiprocessing, single process raises inline)
+        for item in output:
+            print(item)
+        #raise exceptions (from multiprocessing, single process raises inline)
         for f, qval, spec_file_names, combined_spec_file_name in output:
             if isinstance(qval, Exception):
-                qval.args = ('Failed to make q scan at time %s: %s' % (f,
-                                                                    str(qval)),)
+                qval.args = ('Failed to make q scan at time %s: %s' % (f, str(qval)),)
                 raise qval
             else:
                 qvalues.append(qval)
@@ -190,7 +199,8 @@ class Events(GravitySpyTable):
                 spectrogram_file_names_dur2.append(spec_file_names[1])
                 spectrogram_file_names_dur3.append(spec_file_names[2])
                 spectrogram_file_names_dur4.append(spec_file_names[3])
-
+        
+           
         self['q_value'] = qvalues
         all_spectrogram_files.extend(spectrogram_file_names_dur1)
         all_spectrogram_files.extend(spectrogram_file_names_dur2)
@@ -200,16 +210,20 @@ class Events(GravitySpyTable):
         self['Filename2'] = spectrogram_file_names_dur2
         self['Filename3'] = spectrogram_file_names_dur3
         self['Filename4'] = spectrogram_file_names_dur4
+        
 
         results = utils.label_q_scans(filenames_of_images_to_classify=all_spectrogram_files,
                                       path_to_cnn=path_to_cnn,
                                       verbose=verbose,
                                       **kwargs)
-
+        
         results.remove_columns(['Filename1','Filename2','Filename3','Filename4'])
         results = results.to_pandas()
         results = Events.from_pandas(results.merge(self.to_pandas(),
                                                    on=['gravityspy_id']))
+
+
+
         return results
 
     def to_sql(self, table='glitches_v2d0', engine=None, if_exists='append', **kwargs):
@@ -229,6 +243,8 @@ class Events(GravitySpyTable):
                     pass
             engine = create_engine(get_connection_str(**conn_kw))
 
+        print(f"[INFO] Connected to SQL server using engine: {engine}")    
+
         # make a copy of self since we will do some column type manipulation
         # before updatignt the SQL tables
         events_table_copy = self.copy()
@@ -242,6 +258,119 @@ class Events(GravitySpyTable):
         engine.dispose()
         return
 
+    def to_glitches_info_table_v1(self, engine=None, if_exists='append', **kwargs):
+        from sqlalchemy.engine import create_engine
+   
+        events_table_copy = self.copy()
+        df = events_table_copy.to_pandas()
+
+        glitch_columns = [
+            'gravityspy_id',
+            'event_time',
+            'ifo',
+            'peak_time',
+            'peak_time_ns',
+            'start_time',
+            'start_time_ns',
+            'duration',
+            'search',
+            'process_id',
+            'event_id',
+            'peak_frequency',
+            'central_freq',
+            'bandwidth',
+            'channel',
+            'amplitude',
+            'snr',
+            'confidence',
+            'chisq',
+            'chisq_dof',
+            'param_one_name',
+            'param_one_value',
+            'ml_label',
+            'workflow',
+            'subjectset',
+            'Filename1',
+            'Filename2',
+            'Filename3',
+            'Filename4',
+            'upload_flag',
+            'image_status',
+            'data_quality',
+            'citizen_score',
+            'url1',
+            'url2',
+            'url3',
+            'url4',
+            'links_subjects',
+            'q_value',
+            'vco',
+            'model_name'
+        ]
+        
+        # Filter columns, keep only those present
+        columns_present = [col for col in glitch_columns if col in df.columns]
+        df_glitches = df[columns_present].copy()
+
+        # Convert object columns to strings CHECK SYNTAX print output, don’t upload
+        for col in df_glitches.columns:
+            if df_glitches[col].dtype.kind == 'O':
+                df_glitches[col] = df_glitches[col].astype(str)
+
+        # Create SQLAlchemy engine if not provided
+        if engine is None:
+            conn_kw = {}
+            for key in ('db', 'host', 'user', 'passwd', 'server', 'port'):
+                try:
+                    conn_kw[key] = kwargs.pop(key)
+                except KeyError:
+                    pass
+            engine = create_engine(get_connection_str(**conn_kw))
+
+        # Upload to SQL table 'glitches_info_table_v1'
+        df_glitches.to_sql('glitches_info_table_v1', engine, index=False, if_exists=if_exists)
+        #print(df_glitches.iloc[0].to_string())
+        
+        engine.dispose()
+        return
+
+    def to_glitch_class_table_v1(self, project_info_yaml, yaml_configurarion_number, engine=None, if_exists='append', **kwargs):
+        # get class names dynamically instead of hardcoding
+        glitch_classes = GS_utils.get_glitch_class_names(project_info_yaml, yaml_configurarion_number) 
+
+        events_table_copy = self.copy()
+        df = events_table_copy.to_pandas() # make sure this doesn’t alter self
+
+        rows = []
+        for cls in glitch_classes:
+            if cls not in df.columns:
+                continue  # or log warning
+                raise ValueError("Glitch class not in table, "+str(cls))
+
+            sub_df = df[['gravityspy_id', cls]].copy()
+            sub_df = sub_df.rename(columns={cls: 'ml_class_confidence'})
+            sub_df['glitch_class'] = cls
+            sub_df = sub_df[['gravityspy_id', 'glitch_class', 'ml_class_confidence']]
+            rows.append(sub_df)
+
+        long_df = pandas.concat(rows, ignore_index=True)
+
+        # create engine if needed
+        if engine is None:
+            from sqlalchemy.engine import create_engine
+            conn_kw = {}
+            for key in ('db', 'host', 'user', 'passwd', 'server', 'port'):
+                try:
+                    conn_kw[key] = kwargs.pop(key)
+                except KeyError:
+                    pass
+            engine = create_engine(get_connection_str(**conn_kw))
+
+        long_df.to_sql('glitch_class_table_v1', engine, index=False, if_exists=if_exists)
+        #print(long_df)
+        engine.dispose()
+
+    
     def to_glitch_db(self, table='GSMetadata', engine=None, **kwargs):
         """Obtain omicron triggers to run gravityspy on
 
@@ -286,9 +415,15 @@ class Events(GravitySpyTable):
                 except KeyError:
                     pass
             engine = create_engine(get_connection_str(**conn_kw))
-
-        tab.to_sql(con=engine, name=table, if_exists='append',
-                   index=False, chunksize=100)
+        
+        try:
+            tab.to_sql(con=engine, name=table, if_exists='append', index=False, chunksize=100)
+            print(f"[INFO] Successfully uploaded {len(tab)} rows to table '{table}'")
+        except Exception as e:
+            print(f"[ERROR] Failed to upload to table '{table}': {e}")
+     
+        #tab.to_sql(con=engine, name=table, if_exists='append',
+                   #index=False, chunksize=100)
         engine.dispose()
         return
 
@@ -298,6 +433,8 @@ class Events(GravitySpyTable):
         Parameters:
             table (str): name of SQL tabl
         """
+        raise Exception("this function has not been updated with new table structure as of August 2025")
+
         from sqlalchemy.engine import create_engine
         # connect if needed
         if engine is None:
@@ -352,7 +489,7 @@ class Events(GravitySpyTable):
         engine.dispose()
         return
 
-    def upload_to_zooniverse(self, subject_set_id=None, project='1104', features_table=None, upload_to_ldvw=True, engine=None):
+    def upload_to_zooniverse(self, project_info_yaml, yaml_configuration_number, subject_set_id=None, project='1104', features_table=None, upload_to_ldvw=True, engine=None):
         """Obtain omicron triggers to run gravityspy on
 
         Parameters:
@@ -399,19 +536,39 @@ class Events(GravitySpyTable):
                 subject.metadata['q_value'] = str(qval)
                 subject.metadata['#ml_top_confidence'] = str(ml_top_confidence)
                 subject.metadata['#ml_top_label'] = str(ml_top_label)
-                subject.save()
+                #subject.save()
                 subjects.append(subject)
                 self['links_subjects'][self['gravityspy_id'] == gid] = int(subject.id)
+                # fake ID for testing
+                #fake_id = 1439039331
+
+                #if subject.id is not None:
+                    #self['links_subjects'][self['gravityspy_id'] == gid] = int(subject.id)
+                #else:
+                    #self['links_subjects'][self['gravityspy_id'] == gid] = fake_id
+                
+                #subject.raw = {
+                    #'id': str(fake_id),
+                    #'locations': [
+                        #{'image/png': f"https://ldas-jobs.ligo-la.caltech.edu/~gravityspy/fake/{gid}_0.png"},
+                        #{'image/png': f"https://ldas-jobs.ligo-la.caltech.edu/~gravityspy/fake/{gid}_1.png"},
+                        #{'image/png': f"https://ldas-jobs.ligo-la.caltech.edu/~gravityspy/fake/{gid}_2.png"},
+                        #{'image/png': f"https://ldas-jobs.ligo-la.caltech.edu/~gravityspy/fake/{gid}_3.png"},
+                    #]
+                #}
+
                 self['url1'][self['gravityspy_id'] == gid] = subject.raw['locations'][0]['image/png'].split('?')[0]
                 self['url2'][self['gravityspy_id'] == gid] = subject.raw['locations'][1]['image/png'].split('?')[0]
                 self['url3'][self['gravityspy_id'] == gid] = subject.raw['locations'][2]['image/png'].split('?')[0]
                 self['url4'][self['gravityspy_id'] == gid] = subject.raw['locations'][3]['image/png'].split('?')[0]
                 self['upload_flag'][self['gravityspy_id'] == gid] = 1
                 self[self['gravityspy_id'] == gid].to_sql(table="glitches_v2d0")
+                self[self['gravityspy_id'] == gid].to_glitches_info_table_v1(table="glitches_info_table_v1")
+                self[self['gravityspy_id'] == gid].to_glitch_class_table_v1(project_info_yaml, yaml_configuration_number, table="glitch_class_table_v1")
                 if features_table is not None:
                     glitch_features = features_table[features_table['gravityspy_id'] == gid]
                     glitch_features["links_subjects"] = int(subject.id)
-                    glitch_features.to_sql(table='similarity_index_o3')
+                    #glitch_features.to_sql(table='similarity_index_o3')
                 if upload_to_ldvw:
                     SQL_USER = os.environ['SQL_USER']
                     SQL_PASS = os.environ['SQL_PASS']
@@ -467,8 +624,9 @@ class Events(GravitySpyTable):
                                             path_to_semantic_model=path_to_semantic_model, **kwargs)
 
         return Events(results)
-
-    def determine_workflow_and_subjectset(self, project_info_pickle):
+    
+    
+    def determine_workflow_and_subjectset_pickle(self, project_info_pickle):
         """Obtain omicron triggers to run gravityspy on
         Parameters:
             path_to_cnn (str): filename of file with Gravity Spy project info
@@ -500,6 +658,40 @@ class Events(GravitySpyTable):
         self["subjectset"] = subjectset_of_images
 
         return self
+
+    def determine_workflow_and_subjectset(self, project_info_yaml):
+        """Obtain omicron triggers to run gravityspy on
+        Parameters:
+            path_to_cnn (str): filename of file with Gravity Spy project info
+        Returns:
+            `Events` table with columns workflow and subjectset
+        """
+        if 'ml_confidence' not in self.keys() or 'ml_label' not in self.keys():
+            raise ValueError("This method only works if the confidence and label "
+                             "of the image in known.")
+
+        # importing gspyproject, used to be from pickle, now yaml
+        gspyproject = GravitySpyProject.load_project_from_cache(
+                                                                project_info_yaml
+                                                                )
+
+        workflows_for_each_class = gspyproject.get_level_structure(IDfilter='O2')
+        # Determine subject set and workflow this should go to.
+        level_of_images = []
+        subjectset_of_images = []
+        for label, confidence in zip(self['ml_label'], self['ml_confidence']):
+            for iworkflow in ['1610', '1934', '1935', '7765', '7766', '7767']:
+                if label in workflows_for_each_class[iworkflow].keys():
+                     if workflows_for_each_class[iworkflow][label][2][1] <= \
+                            confidence <= \
+                                 workflows_for_each_class[iworkflow][label][2][0]:
+                         level_of_images.append(int(workflows_for_each_class[iworkflow][label][0]))
+                         subjectset_of_images.append(workflows_for_each_class[iworkflow][label][1])
+                         break
+        self["workflow"] = level_of_images
+        self["subjectset"] = subjectset_of_images
+        return self
+
 
     def create_collection(self, name=None, private=True,
                           default_subject=None):
@@ -670,7 +862,6 @@ class Events(GravitySpyTable):
 
         logger.info("Final trigger length: {0}".format(len(triggers)))
 
-
         return triggers
 
     def create_sub(self, channel_name, frame_type,
@@ -771,6 +962,8 @@ class Events(GravitySpyTable):
 
                 **kwargs: anything you can pass to keras.model.predict_proba
         """
+        raise Exception("this function has not been updated with new table structure as of August 2025")     
+        
         # first convert to pandas
         import io
         def byte_to_numpy(byte_image_data):
@@ -818,6 +1011,12 @@ def get_connection_str(db='gravityspy',
                        server='postgresql',
                        user=None,
                        passwd=None):
+#def get_connection_str(db='gravityspy_testing',
+                       #host='172.210.65.88',
+                       #port='5432',
+                       #server='postgresql',
+                       #user=None,
+                       #passwd=None):
     """Create string to pass to create_engine
     """
     if (not user) or (not passwd):

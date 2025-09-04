@@ -5,6 +5,8 @@ processing the outputs into a more understandable way.
 For example ``tile_raster_images`` helps in generating a easy to grasp
 image from a set of samples or weights.
 """
+from ..api.project import GravitySpyProject
+
 from tensorflow.keras import backend as K
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.models import Sequential
@@ -505,10 +507,40 @@ def build_baseline(x):
 
     return x
 
+def get_glitch_class_names(project_info_yaml, yaml_configuration_number):
+    """
+    Load glitch class names from a GravitySpy project YAML file.
+
+    Parameters:
+        project_info_yaml (str): Path to the GravitySpy project YAML file.
+        yaml_configuration_number (str): Version ID inside the YAML to extract classes from. Defaults to '7767'.
+
+    Returns:
+        list of str: Glitch class names.
+
+    Raises:
+        ValueError: If 'level_structure' or specified version is missing.
+    """
+    # Load the GravitySpyProject object from the YAML file
+    gspyproject = GravitySpyProject.load_project_from_cache(project_info_yaml)
+
+    # Access level_structure attribute (should be a dict)
+    level_structure = getattr(gspyproject, 'level_structure', None)
+    if level_structure is None:
+        raise ValueError("'level_structure' attribute not found in GravitySpyProject")
+
+    # Get the dictionary for the specified version key
+    version_data = level_structure.get(yaml_configuration_number)
+    if not version_data:
+        raise ValueError(f"Version '{yaml_configuration_number}' not found in 'level_structure'")
+
+    # Return the glitch class names (keys in the version_data dict)
+    return list(version_data.keys())
+
 def GS_new(nb_classes, img_rows, img_cols, channel_num):
 
     initializer = glorot_normal()
-
+    
     input_tensor_0_5 = tf.keras.layers.Input(shape=(img_rows, img_cols, channel_num), name="0.5")
     input_tensor_1_0 = tf.keras.layers.Input(shape=(img_rows, img_cols, channel_num), name="1.0")
     input_tensor_2_0 = tf.keras.layers.Input(shape=(img_rows, img_cols, channel_num), name="2.0")
@@ -544,5 +576,6 @@ def GS_new(nb_classes, img_rows, img_cols, channel_num):
     return final_model
 
 if __name__ == '__main__':
-    model = GS_new(23, 600, 600, 3)
+    # 23 needs to be replaced by num_classes from yaml for main to function
+    #model = GS_new(23, 600, 600, 3)
     print(model.summary())

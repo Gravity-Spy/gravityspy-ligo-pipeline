@@ -4,6 +4,9 @@ from gravityspy_ligo.table.events import id_generator
 from sqlalchemy.engine import create_engine
 from gravityspy_ligo import __version__
 from gwpy.time import tconvert
+
+from gwpy.table import Table
+
 import argparse
 import os
 import sys
@@ -12,6 +15,9 @@ import pandas
 import math
 
 engine1 = create_engine('postgresql://{0}:{1}@gravityspyplus.ciera.northwestern.edu:5432/gravityspy'.format(os.environ['GRAVITYSPY_DATABASE_USER'],os.environ['GRAVITYSPY_DATABASE_PASSWD']))
+
+#engine1 = create_engine('postgresql://{0}:{1}@172.210.65.88:5432/gravityspy_testing'.format(os.environ['GRAVITYSPY_DATABASE_USER'],os.environ['GRAVITYSPY_DATABASE_PASSWD']))
+
 ### Add logic to auto determine if we are running on LLO or LHO.
 hostname = socket.gethostname()
 if "ligo-la" in hostname:
@@ -36,8 +42,10 @@ def parse_commandline():
     parser.add_argument("--stop-time", type=int,
                         help="Time to stop looking for Omicron triggers",
                         default=DEFAULT_STOP_TIME)
-    parser.add_argument("--project-info-pickle",
-                        help="This pickle file ", required=True)
+    #parser.add_argument("--project-info-pickle",
+                        #help="This pickle file ", required=True)
+    parser.add_argument("--project-info-yaml",
+                        help="This yaml file ", required=True)
     parser.add_argument("--cnn-model",
                         help="Path to name of cnn model", required=True)
     parser.add_argument("--model-type",
@@ -57,10 +65,13 @@ def parse_commandline():
     parser.add_argument("--upload", action="store_true", default=False,
                         help="Run without uploading results")
     parser.add_argument("--port", help="what port for sql connection", required=True)
+    parser.add_argument("--yaml-configuration-number",
+                        help="This is the current yaml configuration version", required=True)
     args = parser.parse_args()
 
 
     return args
+
 
 
 def main():
@@ -82,24 +93,28 @@ def main():
     # Find new omicron triggers
     trigs = Events.get_triggers(args.start_time, args.stop_time,
                                 args.channel_name, dqflag=args.dqflag, snr_min=7.5)
-
+    
     if trigs.to_pandas().empty:
         return
     else:
         # Make sure we are not just reprocessing the same triggers
-        glitches = Events.fetch('gravityspy', 'glitches_v2d0', selection = ['{0} > "event_time" > {1}'.format(args.stop_time, args.start_time)], host='gravityspyplus.ciera.northwestern.edu')
+        glitches = Events.fetch('gravityspy', 'glitches_info_table_v1', selection = ['{0} > "event_time" > {1}'.format(args.stop_time, args.start_time)], host='gravityspyplus.ciera.northwestern.edu')
+        #glitches = Events.fetch('gravityspy_testing', 'glitches_info_table_v1', selection = ['{0} > "event_time" > {1}'.format(args.stop_time, args.start_time)], host='172.210.65.88')
+        
         mask = []
         for event_time in trigs["event_time"]:
             mask.append(event_time not in list(glitches["event_time"]))
         trigs = trigs[mask]
-
+    
     # Make q transforms and label the images
     trigs_results = trigs.classify(path_to_cnn=args.cnn_model,
                                    plot_directory=args.plot_directory,
                                    channel_name=args.channel_name,
                                    frametype=args.frame_type,
                                    model_type=args.model_type,
-                                   nproc=20)
+                                   project_info_yaml=args.project_info_yaml,
+                                   yaml_configuration_number=args.yaml_configuration_number,
+                                   nproc=20, verbose=True)
 
     all_spectrogram_files = []
     all_spectrogram_files.extend(list(trigs_results['Filename1']))
@@ -118,8 +133,11 @@ def main():
     features = Events(features)
 
     # Determine based on ml scores what level these images should go to
-    trigs_results.determine_workflow_and_subjectset(project_info_pickle=args.project_info_pickle)
+    #trigs_results.determine_workflow_and_subjectset(project_info_pickle=args.project_info_pickle)
+    
+    trigs_results.determine_workflow_and_subjectset(project_info_yaml=args.project_info_yaml)
 
     if args.upload:
+        print("Made it to upload!")
         # upload them based on this information
-        trigs_results.upload_to_zooniverse(features_table=features, engine = sql_engine)
+        trigs_results.upload_to_zooniverse(project_info_yaml=args.project_info_yaml, yaml_configuration_number=args.yaml_configuration_number, features_table=features, engine = sql_engine)
