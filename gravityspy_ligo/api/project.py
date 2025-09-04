@@ -74,19 +74,20 @@ class ZooProject(object):
             self.workflow_info[str(iWorkflow)] = flatten(tmp1.raw)
     
     
-    #def cache_project_pickle(self):
-        #"""Parameters
-        #----------
+    def cache_project_pickle(self):
+        """Parameters
+        ----------
 
-        #Returns
-        #-------
-        #A dict with keys of workflow IDs and values list
-        #of golden sets associated with that workflow
-        #"""
-        #output = open('{0}.pkl'.format(self.zoo_project_id), 'wb')
-        # Pickle dictionary using protocol 0.
-        #pickle.dump(self, output, protocol=2)
-        #return
+
+        Returns
+        -------
+        A dict with keys of workflow IDs and values list
+        of golden sets associated with that workflow
+        """
+        output = open('{0}.pkl'.format(self.zoo_project_id), 'wb')
+         Pickle dictionary using protocol 0.
+        pickle.dump(self, output, protocol=2)
+        return
     
     def cache_project(self):
         """Parameters
@@ -101,26 +102,28 @@ class ZooProject(object):
         yaml.dump(self, output)
         return
 
+    @classmethod
+    def load_project_from_cache_pickle(cls, cache_file):
+        """Parameters
+        ----------
+        cache_file : `str` needs a '.pkl' extension
+
+        Returns
+        -------
+        A dict with keys of workflow IDs and values list
+        of golden sets associated with that workflow
+        """
+        with open('{0}'.format(cache_file), 'rb') as pickle_file:
+            # Pickle dictionary using protocol 0.
+            try:
+                return pickle.load(pickle_file, encoding='latin1')
+            except:
+                return pickle.load(pickle_file)
+    
+    
+            
 
     @classmethod
-    #def load_project_from_cache_pickle(cls, cache_file):
-        #"""Parameters
-        #----------
-        #cache_file : `str` needs a '.pkl' extension
-
-        #Returns
-        #-------
-        #A dict with keys of workflow IDs and values list
-        #of golden sets associated with that workflow
-        #"""
-        #with open('{0}'.format(cache_file), 'rb') as pickle_file:
-            # Pickle dictionary using protocol 0.
-            #try:
-                #return pickle.load(pickle_file, encoding='latin1')
-            #except:
-                #return pickle.load(pickle_file)
-    
-    
     def load_project_from_cache(cls, cache_file):
         """Parameters
         ----------

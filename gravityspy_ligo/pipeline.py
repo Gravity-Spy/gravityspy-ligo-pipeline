@@ -42,8 +42,6 @@ def parse_commandline():
     parser.add_argument("--stop-time", type=int,
                         help="Time to stop looking for Omicron triggers",
                         default=DEFAULT_STOP_TIME)
-    #parser.add_argument("--project-info-pickle",
-                        #help="This pickle file ", required=True)
     parser.add_argument("--project-info-yaml",
                         help="This yaml file ", required=True)
     parser.add_argument("--cnn-model",
@@ -133,8 +131,6 @@ def main():
     features = Events(features)
 
     # Determine based on ml scores what level these images should go to
-    #trigs_results.determine_workflow_and_subjectset(project_info_pickle=args.project_info_pickle)
-    
     trigs_results.determine_workflow_and_subjectset(project_info_yaml=args.project_info_yaml)
 
     if args.upload:
