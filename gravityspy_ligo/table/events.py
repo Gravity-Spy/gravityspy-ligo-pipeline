@@ -313,9 +313,26 @@ class Events(GravitySpyTable):
         df_glitches = df[columns_present].copy()
 
         # Convert object columns to strings CHECK SYNTAX print output, don’t upload
-        for col in df_glitches.columns:
-            if df_glitches[col].dtype.kind == 'O':
-                df_glitches[col] = df_glitches[col].astype(str)
+        #for col in df_glitches.columns:
+            #if df_glitches[col].dtype.kind == 'O':  # if object, then text
+                #df_glitches[col] = df_glitches[col].fillna("").astype(str)
+            #else:  # if numeric, then leave NaN (to_sql will insert NULL)
+                #df_glitches[col] = df_glitches[col].where(pandas.notna(df_glitches[col]), None)
+        
+        # Handle object (string-like) columns
+        for col in df_glitches.select_dtypes(include=["object"]).columns:
+            # Replace only NaN/None with empty string
+            df_glitches[col] = df_glitches[col].replace({numpy.nan: ""})
+
+        # Handle numeric columns
+        for col in df_glitches.select_dtypes(include=["number"]).columns:
+            # Replace only NaN with None (so SQL gets NULL)
+            df_glitches[col] = df_glitches[col].where(pandas.notna(df_glitches[col]), None)
+       
+        for col in ["chisq", "chisq_dof"]:
+            if col in df_glitches.columns:
+                df_glitches[col] = pandas.to_numeric(df_glitches[col], errors="coerce")
+                df_glitches[col] = df_glitches[col].where(pandas.notna(df_glitches[col]), None)
 
         # Create SQLAlchemy engine if not provided
         if engine is None:
@@ -536,27 +553,9 @@ class Events(GravitySpyTable):
                 subject.metadata['q_value'] = str(qval)
                 subject.metadata['#ml_top_confidence'] = str(ml_top_confidence)
                 subject.metadata['#ml_top_label'] = str(ml_top_label)
-                #subject.save()
+                subject.save()
                 subjects.append(subject)
                 self['links_subjects'][self['gravityspy_id'] == gid] = int(subject.id)
-                # fake ID for testing
-                #fake_id = 1439039331
-
-                #if subject.id is not None:
-                    #self['links_subjects'][self['gravityspy_id'] == gid] = int(subject.id)
-                #else:
-                    #self['links_subjects'][self['gravityspy_id'] == gid] = fake_id
-                
-                #subject.raw = {
-                    #'id': str(fake_id),
-                    #'locations': [
-                        #{'image/png': f"https://ldas-jobs.ligo-la.caltech.edu/~gravityspy/fake/{gid}_0.png"},
-                        #{'image/png': f"https://ldas-jobs.ligo-la.caltech.edu/~gravityspy/fake/{gid}_1.png"},
-                        #{'image/png': f"https://ldas-jobs.ligo-la.caltech.edu/~gravityspy/fake/{gid}_2.png"},
-                        #{'image/png': f"https://ldas-jobs.ligo-la.caltech.edu/~gravityspy/fake/{gid}_3.png"},
-                    #]
-                #}
-
                 self['url1'][self['gravityspy_id'] == gid] = subject.raw['locations'][0]['image/png'].split('?')[0]
                 self['url2'][self['gravityspy_id'] == gid] = subject.raw['locations'][1]['image/png'].split('?')[0]
                 self['url3'][self['gravityspy_id'] == gid] = subject.raw['locations'][2]['image/png'].split('?')[0]
@@ -568,7 +567,7 @@ class Events(GravitySpyTable):
                 if features_table is not None:
                     glitch_features = features_table[features_table['gravityspy_id'] == gid]
                     glitch_features["links_subjects"] = int(subject.id)
-                    #glitch_features.to_sql(table='similarity_index_o3')
+                    glitch_features.to_sql(table='similarity_index_o3')
                 if upload_to_ldvw:
                     SQL_USER = os.environ['SQL_USER']
                     SQL_PASS = os.environ['SQL_PASS']

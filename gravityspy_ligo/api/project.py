@@ -85,7 +85,7 @@ class ZooProject(object):
         of golden sets associated with that workflow
         """
         output = open('{0}.pkl'.format(self.zoo_project_id), 'wb')
-         Pickle dictionary using protocol 0.
+        # Pickle dictionary using protocol 0.
         pickle.dump(self, output, protocol=2)
         return
     
